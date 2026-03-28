@@ -1,0 +1,1031 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="スロ収支">
+<meta name="theme-color" content="#0f172a">
+<title>スロット収支 & カウンター</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Noto+Sans+JP:wght@400;500;700&display=swap');
+
+  :root {
+    --bg: #0f172a;
+    --surface: #1e293b;
+    --surface2: #263349;
+    --border: #334155;
+    --accent: #38bdf8;
+    --accent2: #f472b6;
+    --green: #4ade80;
+    --red: #f87171;
+    --yellow: #fbbf24;
+    --text: #f1f5f9;
+    --muted: #94a3b8;
+    --radius: 14px;
+    --mono: 'DM Mono', monospace;
+    --sans: 'Noto Sans JP', sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    min-height: 100dvh;
+    padding-bottom: env(safe-area-inset-bottom);
+    overflow-x: hidden;
+  }
+
+  /* ── Navigation ── */
+  .nav {
+    position: fixed; top: 0; left: 0; right: 0;
+    background: rgba(15,23,42,0.92);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--border);
+    z-index: 100;
+    padding-top: env(safe-area-inset-top);
+  }
+  .nav-inner {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 20px;
+  }
+  .nav-title {
+    font-family: var(--mono);
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--accent);
+    letter-spacing: 0.05em;
+  }
+
+  .tab-bar {
+    display: flex;
+    border-bottom: 1px solid var(--border);
+  }
+  .tab-btn {
+    flex: 1;
+    padding: 10px 0;
+    background: none;
+    border: none;
+    color: var(--muted);
+    font-family: var(--sans);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: color 0.2s;
+    position: relative;
+  }
+  .tab-btn.active {
+    color: var(--accent);
+  }
+  .tab-btn.active::after {
+    content: '';
+    position: absolute;
+    bottom: -1px; left: 20%; right: 20%;
+    height: 2px;
+    background: var(--accent);
+    border-radius: 2px;
+  }
+
+  /* ── Main content ── */
+  .content {
+    padding-top: calc(env(safe-area-inset-top) + 96px);
+    padding-bottom: 32px;
+    min-height: 100dvh;
+  }
+
+  .page { display: none; padding: 16px; }
+  .page.active { display: block; }
+
+  /* ── Cards ── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    margin-bottom: 12px;
+  }
+  .card-title {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 12px;
+  }
+
+  /* ── Summary cards ── */
+  .summary-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+  .stat-card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px;
+  }
+  .stat-label { font-size: 11px; color: var(--muted); margin-bottom: 4px; }
+  .stat-value {
+    font-family: var(--mono);
+    font-size: 22px;
+    font-weight: 500;
+  }
+  .stat-value.pos { color: var(--green); }
+  .stat-value.neg { color: var(--red); }
+  .stat-value.neu { color: var(--text); }
+
+  /* ── Form inputs ── */
+  .form-group { margin-bottom: 12px; }
+  .form-label {
+    display: block;
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 6px;
+    font-weight: 500;
+  }
+  .form-input, .form-select {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 15px;
+    padding: 11px 14px;
+    outline: none;
+    -webkit-appearance: none;
+    transition: border-color 0.2s;
+  }
+  .form-input:focus, .form-select:focus {
+    border-color: var(--accent);
+  }
+  .form-select option { background: var(--surface); }
+
+  .form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  /* ── Buttons ── */
+  .btn {
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+    width: 100%;
+    padding: 13px;
+    border-radius: 12px;
+    border: none;
+    font-family: var(--sans);
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: opacity 0.15s, transform 0.1s;
+  }
+  .btn:active { opacity: 0.75; transform: scale(0.98); }
+  .btn-primary { background: var(--accent); color: var(--bg); }
+  .btn-danger { background: var(--red); color: white; }
+  .btn-ghost {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+  }
+
+  /* ── Records list ── */
+  .record-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px;
+    margin-bottom: 8px;
+    position: relative;
+  }
+  .record-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 8px;
+  }
+  .record-machine { font-weight: 700; font-size: 15px; }
+  .record-date { font-size: 12px; color: var(--muted); }
+  .record-store { font-size: 12px; color: var(--muted); margin-bottom: 6px; }
+  .record-pnl {
+    font-family: var(--mono);
+    font-size: 20px;
+    font-weight: 500;
+  }
+  .record-meta {
+    display: flex;
+    gap: 12px;
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .record-delete {
+    position: absolute;
+    top: 12px; right: 12px;
+    background: none;
+    border: none;
+    color: var(--muted);
+    font-size: 18px;
+    cursor: pointer;
+    padding: 4px;
+    line-height: 1;
+  }
+
+  /* ── Counter page ── */
+  .counter-machine-bar {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 16px;
+  }
+  .counter-machine-bar .form-input { flex: 1; }
+  .counter-game-display {
+    font-family: var(--mono);
+    font-size: 48px;
+    font-weight: 500;
+    text-align: center;
+    color: var(--accent);
+    letter-spacing: -0.02em;
+    margin: 4px 0 2px;
+  }
+  .counter-game-label {
+    text-align: center;
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 20px;
+  }
+
+  .counter-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+  .counter-item {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 14px 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    position: relative;
+  }
+  .counter-item-delete {
+    position: absolute;
+    top: 6px; right: 8px;
+    background: none;
+    border: none;
+    color: var(--border);
+    font-size: 14px;
+    cursor: pointer;
+    padding: 2px;
+    line-height: 1;
+    transition: color 0.15s;
+  }
+  .counter-item-delete:active { color: var(--red); }
+  .counter-icon { font-size: 28px; }
+  .counter-name { font-size: 12px; color: var(--muted); font-weight: 500; text-align: center; }
+  .counter-count {
+    font-family: var(--mono);
+    font-size: 28px;
+    font-weight: 500;
+    color: var(--text);
+    min-width: 60px;
+    text-align: center;
+  }
+  .counter-prob {
+    font-size: 11px;
+    color: var(--muted);
+    font-family: var(--mono);
+  }
+  .counter-btns {
+    display: flex; gap: 6px; align-items: center;
+  }
+  .cnt-btn {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    font-size: 20px;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.15s, transform 0.1s;
+  }
+  .cnt-btn:active { transform: scale(0.9); }
+  .cnt-btn.plus { background: var(--accent); color: var(--bg); border-color: var(--accent); font-size: 22px; width: 44px; height: 44px; }
+  .cnt-btn.minus { background: var(--surface2); color: var(--muted); }
+
+  /* Add role card */
+  .counter-add-card {
+    background: transparent;
+    border: 2px dashed var(--border);
+    border-radius: 14px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    cursor: pointer;
+    min-height: 140px;
+    transition: border-color 0.2s, background 0.2s;
+  }
+  .counter-add-card:active { background: var(--surface2); border-color: var(--accent); }
+  .counter-add-icon { font-size: 32px; color: var(--muted); }
+  .counter-add-label { font-size: 12px; color: var(--muted); font-weight: 500; }
+
+  .counter-actions {
+    display: flex; gap: 10px; margin-top: 4px;
+  }
+  .counter-actions .btn { flex: 1; }
+
+  /* ── Modal ── */
+  .modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.7);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    z-index: 300;
+    display: flex; align-items: flex-end;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.25s;
+  }
+  .modal-overlay.open { opacity: 1; pointer-events: all; }
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px 20px 0 0;
+    padding: 24px 20px calc(env(safe-area-inset-bottom) + 24px);
+    width: 100%;
+    transform: translateY(100%);
+    transition: transform 0.3s cubic-bezier(0.32,0.72,0,1);
+  }
+  .modal-overlay.open .modal { transform: translateY(0); }
+  .modal-handle {
+    width: 36px; height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    margin: 0 auto 20px;
+  }
+  .modal-title {
+    font-size: 16px; font-weight: 700;
+    margin-bottom: 20px; text-align: center;
+  }
+  .emoji-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+  .emoji-btn {
+    font-size: 26px;
+    background: var(--surface2);
+    border: 2px solid transparent;
+    border-radius: 10px;
+    padding: 6px;
+    cursor: pointer;
+    text-align: center;
+    transition: border-color 0.15s, transform 0.1s;
+  }
+  .emoji-btn:active { transform: scale(0.9); }
+  .emoji-btn.selected { border-color: var(--accent); }
+
+  /* ── Empty state ── */
+  .empty {
+    text-align: center;
+    padding: 48px 24px;
+    color: var(--muted);
+  }
+  .empty-icon { font-size: 48px; margin-bottom: 12px; }
+  .empty-text { font-size: 14px; }
+
+  /* ── Divider ── */
+  .divider {
+    height: 1px;
+    background: var(--border);
+    margin: 16px 0;
+  }
+
+  /* ── Toast ── */
+  .toast {
+    position: fixed;
+    bottom: calc(env(safe-area-inset-bottom) + 24px);
+    left: 50%; transform: translateX(-50%) translateY(20px);
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 100px;
+    padding: 10px 20px;
+    font-size: 13px;
+    font-weight: 500;
+    white-space: nowrap;
+    opacity: 0;
+    transition: opacity 0.3s, transform 0.3s;
+    z-index: 200;
+    pointer-events: none;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* ── Summary new layout ── */
+  .month-nav {
+    display: flex; align-items: center; justify-content: center; gap: 24px;
+    margin-bottom: 8px;
+  }
+  .month-arrow {
+    background: none; border: none;
+    color: var(--muted); font-size: 28px; font-weight: 300;
+    cursor: pointer; padding: 4px 8px; line-height: 1;
+    transition: color 0.15s;
+  }
+  .month-arrow:active { color: var(--accent); }
+  .month-label {
+    font-size: 15px; font-weight: 700; color: var(--text); min-width: 110px; text-align: center;
+  }
+  .pnl-hero {
+    text-align: center; margin-bottom: 16px;
+  }
+  .pnl-hero-value {
+    font-family: var(--mono); font-size: 42px; font-weight: 500; letter-spacing: -0.02em;
+  }
+  .detail-table {
+    display: flex;
+    justify-content: center;
+  }
+  .detail-col {
+    width: 140px; padding: 0; flex: none;
+  }
+  .detail-divider {
+    width: 1px; background: var(--border); margin: 0;
+  }
+  .detail-header {
+    font-size: 12px; font-weight: 700;
+    padding: 8px 10px 7px;
+    border-bottom: 1px solid var(--border);
+  }
+  .detail-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 7px 10px;
+    border-bottom: 1px solid var(--border);
+    min-height: 32px;
+  }
+  .detail-label { font-size: 11px; color: var(--muted); }
+  .detail-val { font-family: var(--mono); font-size: 12px; font-weight: 500; }
+  .detail-val.pos { color: var(--green); }
+  .detail-val.neg { color: var(--red); }
+  .detail-val.neu { color: var(--text); }
+
+  /* ── Scrollbar hide ── */
+  ::-webkit-scrollbar { display: none; }
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <span class="nav-title">🎰 SLOT TRACKER</span>
+  </div>
+  <div class="tab-bar">
+    <button class="tab-btn active" onclick="switchTab('summary')">収支サマリー</button>
+    <button class="tab-btn" onclick="switchTab('record')">記録入力</button>
+    <button class="tab-btn" onclick="switchTab('history')">履歴</button>
+    <button class="tab-btn" onclick="switchTab('counter')">子役カウンター</button>
+  </div>
+</nav>
+
+<div class="content">
+
+  <!-- ── サマリーページ ── -->
+  <div id="page-summary" class="page active">
+
+    <!-- 月ナビ -->
+    <div class="month-nav">
+      <button class="month-arrow" onclick="changeMonth(-1)">&#8249;</button>
+      <span class="month-label" id="month-label">2025年1月</span>
+      <button class="month-arrow" onclick="changeMonth(1)">&#8250;</button>
+    </div>
+
+    <!-- 月間収支合計 -->
+    <div class="pnl-hero">
+      <div class="pnl-hero-value" id="hero-pnl">¥0</div>
+    </div>
+
+    <!-- 投資・回収 詳細テーブル -->
+    <div class="card" style="padding:0;overflow:hidden">
+      <div class="detail-table">
+        <div class="detail-col">
+          <div class="detail-header neg">🏦 投資</div>
+          <div class="detail-row"><span class="detail-label">合計</span><span class="detail-val neg" id="s-invest-total">¥0</span></div>
+          <div class="detail-row"><span class="detail-label">最大</span><span class="detail-val neg" id="s-invest-max">¥0</span></div>
+          <div class="detail-row"><span class="detail-label">最小</span><span class="detail-val neg" id="s-invest-min">¥0</span></div>
+          <div class="detail-row"><span class="detail-label">平均</span><span class="detail-val neg" id="s-invest-avg">¥0</span></div>
+          <div class="detail-row"><span class="detail-label">中央値</span><span class="detail-val neg" id="s-invest-med">¥0</span></div>
+        </div>
+        <div class="detail-divider"></div>
+        <div class="detail-col">
+          <div class="detail-header pos">💰 回収</div>
+          <div class="detail-row"><span class="detail-label">合計</span><span class="detail-val pos" id="s-return-total">¥0</span></div>
+          <div class="detail-row"><span class="detail-label">最大</span><span class="detail-val pos" id="s-return-max">¥0</span></div>
+          <div class="detail-row"><span class="detail-label">最小</span><span class="detail-val pos" id="s-return-min">¥0</span></div>
+          <div class="detail-row"><span class="detail-label">平均</span><span class="detail-val pos" id="s-return-avg">¥0</span></div>
+          <div class="detail-row"><span class="detail-label">中央値</span><span class="detail-val pos" id="s-return-med">¥0</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 勝敗・統計 -->
+    <div class="card" style="padding:0;overflow:hidden">
+      <div class="detail-table">
+        <div class="detail-col">
+          <div class="detail-header" style="color:var(--text)">📊 成績</div>
+          <div class="detail-row"><span class="detail-label">勝ち</span><span class="detail-val neu" id="s-win">0回</span></div>
+          <div class="detail-row"><span class="detail-label">引き分け</span><span class="detail-val neu" id="s-draw">0回</span></div>
+          <div class="detail-row"><span class="detail-label">勝率</span><span class="detail-val neu" id="s-winrate">- %</span></div>
+          <div class="detail-row"><span class="detail-label">回収率</span><span class="detail-val neu" id="s-rratio">- %</span></div>
+        </div>
+        <div class="detail-divider"></div>
+        <div class="detail-col">
+          <div class="detail-header" style="color:var(--text)">💹 収支</div>
+          <div class="detail-row"><span class="detail-label">負け</span><span class="detail-val neu" id="s-lose">0回</span></div>
+          <div class="detail-row"><span class="detail-label">イベント数</span><span class="detail-val neu" id="s-count">0</span></div>
+          <div class="detail-row"><span class="detail-label">収支平均</span><span class="detail-val" id="s-pnl-avg">¥0</span></div>
+          <div class="detail-row"><span class="detail-label">収支中央値</span><span class="detail-val" id="s-pnl-med">¥0</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 機種別ランキング -->
+    <div class="card">
+      <div class="card-title">機種別収支 TOP5</div>
+      <div id="machine-ranking">
+        <div class="empty"><div class="empty-text">記録がありません</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── 記録入力ページ ── -->
+  <div id="page-record" class="page">
+    <div class="card">
+      <div class="card-title">新規記録</div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">📅 日付</label>
+          <input type="date" class="form-input" id="r-date">
+        </div>
+        <div class="form-group">
+          <label class="form-label">🏪 店舗名</label>
+          <input type="text" class="form-input" id="r-store" placeholder="店舗名">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">🎰 機種名</label>
+        <input type="text" class="form-input" id="r-machine" placeholder="例: バジリスク絆2">
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">💸 投資額 (円)</label>
+          <input type="number" class="form-input" id="r-invest" placeholder="0" inputmode="numeric">
+        </div>
+        <div class="form-group">
+          <label class="form-label">💰 回収額 (円)</label>
+          <input type="number" class="form-input" id="r-return" placeholder="0" inputmode="numeric">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">🎮 ゲーム数</label>
+        <input type="number" class="form-input" id="r-games" placeholder="0" inputmode="numeric">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">📝 子役確率メモ</label>
+        <input type="text" class="form-input" id="r-note" placeholder="例: チェリー1/45, スイカ1/120">
+      </div>
+
+      <button class="btn btn-primary" onclick="saveRecord()">✓ 記録を保存</button>
+    </div>
+  </div>
+
+  <!-- ── 履歴ページ ── -->
+  <div id="page-history" class="page">
+    <div id="history-list">
+      <div class="empty">
+        <div class="empty-icon">📋</div>
+        <div class="empty-text">まだ記録がありません<br>「記録入力」から追加してください</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── 子役カウンターページ ── -->
+  <div id="page-counter" class="page">
+    <div class="card">
+      <div class="card-title">セッション設定</div>
+      <div class="counter-machine-bar">
+        <input type="text" class="form-input" id="c-machine" placeholder="機種名（任意）">
+      </div>
+    </div>
+
+    <div class="card" style="text-align:center">
+      <div class="card-title">総ゲーム数</div>
+      <input type="number" id="total-games" class="form-input" inputmode="numeric" placeholder="0"
+        style="font-family:var(--mono);font-size:42px;font-weight:500;text-align:center;color:var(--accent);padding:8px 0;height:auto;margin-bottom:4px"
+        oninput="onGamesInput(this.value)">
+      <div class="counter-game-label">TOTAL GAMES</div>
+    </div>
+
+    <div class="counter-grid" id="counter-grid">
+      <!-- generated by JS -->
+    </div>
+
+    <div class="counter-actions">
+      <button class="btn btn-ghost" onclick="resetCounter()">↺ リセット</button>
+      <button class="btn btn-primary" onclick="saveCounterToRecord()">📊 収支に記録</button>
+    </div>
+  </div>
+
+</div>
+
+<!-- ── Add Role Modal ── -->
+<div class="modal-overlay" id="modal-overlay" onclick="closeModal(event)">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">子役を追加</div>
+    <div class="form-group">
+      <label class="form-label">アイコンを選択</label>
+      <div class="emoji-grid" id="emoji-grid"></div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">名前</label>
+      <input type="text" class="form-input" id="modal-name" placeholder="例: 強チェリー" maxlength="10">
+    </div>
+    <button class="btn btn-primary" onclick="confirmAddRole()" style="margin-top:4px">追加する</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── State ──
+let records = JSON.parse(localStorage.getItem('slot-records') || '[]');
+
+const DEFAULT_ROLES = [
+  { key: 'cherry', icon: '🍒', name: 'チェリー' },
+  { key: 'suika',  icon: '🍉', name: 'スイカ' },
+  { key: 'bell',   icon: '🔔', name: 'ベル' },
+  { key: 'replay', icon: '🔁', name: 'リプレイ' },
+  { key: 'hazure', icon: '❌', name: 'はずれ目' },
+];
+
+const EMOJI_OPTIONS = [
+  '🍒','🍉','🔔','🔁','❌','⭐','💎','7️⃣','🃏','🎴',
+  '🌸','🦊','🐉','🌟','💥','🎯','🔥','⚡','🍀','🎰',
+  '👑','🦁','🐯','🐸','🎪','🏆','🎲','🎳','🎸','🎵',
+];
+
+// Dynamic roles (persisted)
+let roles = JSON.parse(localStorage.getItem('slot-roles') || 'null') || DEFAULT_ROLES.map(r => ({...r}));
+
+let counterState = {
+  games: 0,
+  counts: {}
+};
+
+let selectedEmoji = EMOJI_OPTIONS[0];
+
+// ── Init ──
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('r-date').value = new Date().toISOString().split('T')[0];
+  initCounterCounts();
+  buildCounter();
+  buildEmojiGrid();
+  refreshSummary();
+  refreshHistory();
+});
+
+function initCounterCounts() {
+  roles.forEach(r => {
+    if (counterState.counts[r.key] === undefined) counterState.counts[r.key] = 0;
+  });
+}
+
+// ── Tabs ──
+function switchTab(tab) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-' + tab).classList.add('active');
+  event.target.classList.add('active');
+  if (tab === 'summary') refreshSummary();
+  if (tab === 'history') refreshHistory();
+}
+
+// ── Save record ──
+function saveRecord() {
+  const invest = parseInt(document.getElementById('r-invest').value) || 0;
+  const ret    = parseInt(document.getElementById('r-return').value) || 0;
+  const machine = document.getElementById('r-machine').value.trim();
+  if (!machine) { showToast('⚠ 機種名を入力してください'); return; }
+  if (!invest && !ret) { showToast('⚠ 投資額または回収額を入力してください'); return; }
+  const rec = {
+    id: Date.now(),
+    date: document.getElementById('r-date').value,
+    store: document.getElementById('r-store').value.trim(),
+    machine, invest, return: ret, pnl: ret - invest,
+    games: parseInt(document.getElementById('r-games').value) || 0,
+    note: document.getElementById('r-note').value.trim(),
+  };
+  records.unshift(rec);
+  save();
+  clearForm();
+  showToast('✓ 記録を保存しました');
+}
+
+function clearForm() {
+  ['r-store','r-machine','r-invest','r-return','r-games','r-note'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
+  document.getElementById('r-date').value = new Date().toISOString().split('T')[0];
+}
+
+// ── Summary ──
+let summaryMonth = new Date(); // current viewed month
+
+function changeMonth(delta) {
+  summaryMonth = new Date(summaryMonth.getFullYear(), summaryMonth.getMonth() + delta, 1);
+  refreshSummary();
+}
+
+function median(arr) {
+  if (!arr.length) return 0;
+  const s = [...arr].sort((a, b) => a - b);
+  const m = Math.floor(s.length / 2);
+  return s.length % 2 ? s[m] : Math.round((s[m-1] + s[m]) / 2);
+}
+
+function refreshSummary() {
+  const y = summaryMonth.getFullYear(), mo = summaryMonth.getMonth();
+  document.getElementById('month-label').textContent = `${y}年${mo + 1}月`;
+
+  const monthRecs = records.filter(r => {
+    const d = new Date(r.date);
+    return d.getFullYear() === y && d.getMonth() === mo;
+  });
+
+  const pnl = monthRecs.reduce((a, r) => a + r.pnl, 0);
+  const hero = document.getElementById('hero-pnl');
+  hero.textContent = fmt(pnl);
+  hero.style.color = pnl >= 0 ? 'var(--green)' : 'var(--red)';
+
+  const invests = monthRecs.map(r => r.invest);
+  const returns = monthRecs.map(r => r.return);
+  const pnls    = monthRecs.map(r => r.pnl);
+  const wins    = monthRecs.filter(r => r.pnl > 0).length;
+  const loses   = monthRecs.filter(r => r.pnl < 0).length;
+  const draws   = monthRecs.filter(r => r.pnl === 0).length;
+  const total   = monthRecs.length;
+  const iTotal  = invests.reduce((a, v) => a + v, 0);
+  const rTotal  = returns.reduce((a, v) => a + v, 0);
+
+  const sv = (id, val, cls) => {
+    const el = document.getElementById(id);
+    el.textContent = val;
+    el.className = 'detail-val' + (cls ? ' ' + cls : '');
+  };
+
+  sv('s-invest-total', iTotal ? fmt(iTotal) : '¥0', 'neg');
+  sv('s-invest-max',   invests.length ? fmt(Math.max(...invests)) : '¥0', 'neg');
+  sv('s-invest-min',   invests.length ? fmt(Math.min(...invests)) : '¥0', 'neg');
+  sv('s-invest-avg',   total ? fmt(Math.round(iTotal / total)) : '¥0', 'neg');
+  sv('s-invest-med',   invests.length ? fmt(median(invests)) : '¥0', 'neg');
+
+  sv('s-return-total', rTotal ? fmt(rTotal) : '¥0', 'pos');
+  sv('s-return-max',   returns.length ? fmt(Math.max(...returns)) : '¥0', 'pos');
+  sv('s-return-min',   returns.length ? fmt(Math.min(...returns)) : '¥0', 'pos');
+  sv('s-return-avg',   total ? fmt(Math.round(rTotal / total)) : '¥0', 'pos');
+  sv('s-return-med',   returns.length ? fmt(median(returns)) : '¥0', 'pos');
+
+  sv('s-win',    wins + '回', 'neu');
+  sv('s-lose',   loses + '回', 'neu');
+  sv('s-draw',   draws + '回', 'neu');
+  sv('s-winrate', total ? (Math.round(wins / total * 10000) / 100) + '%' : '- %', 'neu');
+  sv('s-rratio',  iTotal ? (Math.round(rTotal / iTotal * 10000) / 100) + '%' : '- %', 'neu');
+
+  sv('s-count',   total + '', 'neu');
+  const pnlAvg = total ? Math.round(pnls.reduce((a,v)=>a+v,0)/total) : 0;
+  const pnlMed = pnls.length ? median(pnls) : 0;
+  sv('s-pnl-avg', fmt(pnlAvg), pnlAvg >= 0 ? 'pos' : 'neg');
+  sv('s-pnl-med', fmt(pnlMed), pnlMed >= 0 ? 'pos' : 'neg');
+
+  // Machine ranking (all time)
+  const byMachine = {};
+  records.forEach(r => {
+    if (!byMachine[r.machine]) byMachine[r.machine] = { pnl: 0, count: 0 };
+    byMachine[r.machine].pnl += r.pnl;
+    byMachine[r.machine].count++;
+  });
+  const sorted = Object.entries(byMachine).sort((a, b) => b[1].pnl - a[1].pnl).slice(0, 5);
+  const el = document.getElementById('machine-ranking');
+  if (!sorted.length) { el.innerHTML = '<div class="empty"><div class="empty-text">記録がありません</div></div>'; return; }
+  el.innerHTML = sorted.map(([m, d]) => `
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border)">
+      <div><div style="font-size:14px;font-weight:600">${m}</div><div style="font-size:11px;color:var(--muted)">${d.count}回</div></div>
+      <div class="stat-value ${d.pnl >= 0 ? 'pos' : 'neg'}" style="font-size:18px">${fmt(d.pnl)}</div>
+    </div>
+  `).join('');
+}
+
+// ── History ──
+function refreshHistory() {
+  const el = document.getElementById('history-list');
+  if (!records.length) {
+    el.innerHTML = '<div class="empty"><div class="empty-icon">📋</div><div class="empty-text">まだ記録がありません<br>「記録入力」から追加してください</div></div>';
+    return;
+  }
+  el.innerHTML = records.map(r => `
+    <div class="record-item">
+      <button class="record-delete" onclick="deleteRecord(${r.id})">✕</button>
+      <div class="record-header">
+        <div>
+          <div class="record-machine">${r.machine}</div>
+          <div class="record-date">${r.date}${r.store ? ' · ' + r.store : ''}</div>
+        </div>
+        <div class="record-pnl ${r.pnl >= 0 ? 'pos' : 'neg'}">${fmt(r.pnl)}</div>
+      </div>
+      <div class="record-meta">
+        <span>投資 ${fmt(r.invest)}</span>
+        <span>回収 ${fmt(r.return)}</span>
+        ${r.games ? '<span>G数 ' + r.games + '</span>' : ''}
+      </div>
+      ${r.note ? `<div style="margin-top:6px;font-size:12px;color:var(--muted)">${r.note}</div>` : ''}
+    </div>
+  `).join('');
+}
+
+function deleteRecord(id) {
+  records = records.filter(r => r.id !== id);
+  save();
+  refreshHistory();
+  refreshSummary();
+  showToast('🗑 削除しました');
+}
+
+// ── Counter ──
+function buildCounter() {
+  const grid = document.getElementById('counter-grid');
+  const roleCards = roles.map(role => `
+    <div class="counter-item" id="ci-${role.key}">
+      <button class="counter-item-delete" onclick="removeRole('${role.key}')">✕</button>
+      <div class="counter-icon">${role.icon}</div>
+      <div class="counter-name">${role.name}</div>
+      <div class="counter-btns">
+        <button class="cnt-btn minus" onclick="countRole('${role.key}', -1)">−</button>
+        <div class="counter-count" id="cnt-${role.key}">${counterState.counts[role.key] || 0}</div>
+        <button class="cnt-btn plus" onclick="countRole('${role.key}', 1)">+</button>
+      </div>
+      <div class="counter-prob" id="prob-${role.key}">- / -</div>
+    </div>
+  `).join('');
+
+  const addCard = `
+    <div class="counter-add-card" onclick="openModal()">
+      <div class="counter-add-icon">＋</div>
+      <div class="counter-add-label">子役を追加</div>
+    </div>
+  `;
+
+  grid.innerHTML = roleCards + addCard;
+  updateCounterUI();
+}
+
+function countRole(key, delta) {
+  if (counterState.counts[key] === undefined) counterState.counts[key] = 0;
+  counterState.counts[key] = Math.max(0, counterState.counts[key] + delta);
+  updateCounterUI();
+}
+
+function onGamesInput(val) {
+  counterState.games = Math.max(0, parseInt(val) || 0);
+  updateCounterUI();
+}
+
+function updateCounterUI() {
+  roles.forEach(role => {
+    const el = document.getElementById('cnt-' + role.key);
+    const probEl = document.getElementById('prob-' + role.key);
+    if (!el) return;
+    const cnt = counterState.counts[role.key] || 0;
+    el.textContent = cnt;
+    const g = counterState.games;
+    if (g > 0 && cnt > 0) {
+      probEl.textContent = `1/${(g / cnt).toFixed(1)}`;
+    } else {
+      probEl.textContent = '- / -';
+    }
+  });
+}
+
+function removeRole(key) {
+  if (roles.length <= 1) { showToast('⚠ 最低1つは必要です'); return; }
+  roles = roles.filter(r => r.key !== key);
+  delete counterState.counts[key];
+  saveRoles();
+  buildCounter();
+  showToast('🗑 削除しました');
+}
+
+function resetCounter() {
+  counterState.games = 0;
+  roles.forEach(r => { counterState.counts[r.key] = 0; });
+  document.getElementById('total-games').value = '';
+  updateCounterUI();
+  showToast('↺ リセットしました');
+}
+
+function saveCounterToRecord() {
+  const machine = document.getElementById('c-machine').value.trim() || '不明';
+  const parts = roles.map(r => {
+    const cnt = counterState.counts[r.key] || 0;
+    if (cnt === 0) return null;
+    const g = counterState.games;
+    const prob = g > 0 ? `1/${(g / cnt).toFixed(1)}` : '0回';
+    return `${r.name}:${cnt}回(${prob})`;
+  }).filter(Boolean);
+  document.getElementById('r-machine').value = machine;
+  document.getElementById('r-games').value = counterState.games;
+  document.getElementById('r-note').value = parts.join(' / ');
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-record').classList.add('active');
+  document.querySelectorAll('.tab-btn')[1].classList.add('active');
+  showToast('📊 記録入力に引き継ぎました');
+}
+
+// ── Modal ──
+function buildEmojiGrid() {
+  const grid = document.getElementById('emoji-grid');
+  grid.innerHTML = EMOJI_OPTIONS.map(e => `
+    <button class="emoji-btn ${e === selectedEmoji ? 'selected' : ''}" onclick="selectEmoji('${e}', this)">${e}</button>
+  `).join('');
+}
+
+function selectEmoji(emoji, btn) {
+  selectedEmoji = emoji;
+  document.querySelectorAll('.emoji-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+}
+
+function openModal() {
+  selectedEmoji = EMOJI_OPTIONS[0];
+  buildEmojiGrid();
+  document.getElementById('modal-name').value = '';
+  document.getElementById('modal-overlay').classList.add('open');
+}
+
+function closeModal(e) {
+  if (e.target === document.getElementById('modal-overlay')) {
+    document.getElementById('modal-overlay').classList.remove('open');
+  }
+}
+
+function confirmAddRole() {
+  const name = document.getElementById('modal-name').value.trim();
+  if (!name) { showToast('⚠ 名前を入力してください'); return; }
+  const key = 'custom_' + Date.now();
+  roles.push({ key, icon: selectedEmoji, name });
+  counterState.counts[key] = 0;
+  saveRoles();
+  buildCounter();
+  document.getElementById('modal-overlay').classList.remove('open');
+  showToast('✓ ' + name + ' を追加しました');
+}
+
+// ── Utils ──
+function fmt(n) {
+  return (n >= 0 ? '¥' : '-¥') + Math.abs(n).toLocaleString();
+}
+
+function save() {
+  localStorage.setItem('slot-records', JSON.stringify(records));
+}
+
+function saveRoles() {
+  localStorage.setItem('slot-roles', JSON.stringify(roles));
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2200);
+}
+</script>
+</body>
+</html>
