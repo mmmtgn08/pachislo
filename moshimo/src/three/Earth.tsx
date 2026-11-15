@@ -81,8 +81,11 @@ export const Earth: React.FC<{
   atmosphere?: number; // 0..1
   clouds?: number; // 0..1
   crumble?: number; // 0..1 (0 = 無傷)
+  ice?: number; // 0..1 凍りつく
+  lights?: number; // 0..1 夜側の街明かり
+  strip?: number; // 0..1 大気や海が宇宙へ流れ出す
   radius?: number;
-}> = ({rotation, atmosphere = 1, clouds = 1, crumble = 0, radius = 2}) => {
+}> = ({rotation, atmosphere = 1, clouds = 1, crumble = 0, ice = 0, lights = 0, strip = 0, radius = 2}) => {
   const tex = useMemo(makeTextures, []);
   const frags = useMemo(
     () =>
@@ -139,6 +142,33 @@ export const Earth: React.FC<{
           <meshStandardMaterial map={tex.clouds} transparent opacity={clouds} depthWrite={false} />
         </mesh>
       )}
+      {ice > 0 && (
+        <mesh rotation={[0, rotation, 0]}>
+          <sphereGeometry args={[radius * 1.008, 64, 48]} />
+          <meshStandardMaterial color="#eef8ff" transparent opacity={0.92 * ice} roughness={0.4} depthWrite={false} />
+        </mesh>
+      )}
+      {lights > 0 && (
+        <group rotation={[0, rotation, 0]}>
+          {frags.slice(0, 260).map((f, i) => (
+            <mesh key={i} position={[f.dir.x * radius * 1.004, f.dir.y * radius * 1.004, f.dir.z * radius * 1.004]}>
+              <sphereGeometry args={[0.018 + f.size * 0.05, 4, 4]} />
+              <meshBasicMaterial color="#ffd27a" transparent opacity={lights} />
+            </mesh>
+          ))}
+        </group>
+      )}
+      {strip > 0 &&
+        frags.slice(0, 200).map((f, i) => {
+          const t = (strip * 1.6 + f.speed * 0.3) % 1;
+          const d = radius * (1.02 + t * 2.2);
+          return (
+            <mesh key={`s${i}`} position={[f.dir.x * d, f.dir.y * d, f.dir.z * d]} scale={0.05 + 0.06 * (1 - t)}>
+              <sphereGeometry args={[1, 6, 6]} />
+              <meshBasicMaterial color={i % 3 ? '#7cc4ff' : '#ffffff'} transparent opacity={(1 - t) * Math.min(1, strip * 4)} />
+            </mesh>
+          );
+        })}
       {atmosphere > 0 && (
         <mesh>
           <sphereGeometry args={[radius * 1.06, 48, 32]} />

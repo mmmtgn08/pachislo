@@ -13,7 +13,8 @@ const SPEAKER = Number(process.env.VOICE_SPEAKER || 13); // 13 = 青山龍星
 const SPEAKER_CREDIT = process.env.VOICE_CREDIT || 'VOICEVOX:青山龍星';
 const SPEED = Number(process.env.VOICE_SPEED || 1.15);
 const VOICEVOX = (process.env.VOICEVOX_URL || 'http://127.0.0.1:50021').replace(/\/$/, '');
-const SCENE_TYPES = ['earthIntro', 'city', 'fire', 'person', 'personOk', 'ocean', 'crumble', 'earthEnd'];
+const SCENE_TYPES = ['earthIntro', 'city', 'fire', 'park', 'ocean', 'crumble', 'earthEnd'];
+const EVENTS = ['none', 'stall', 'float', 'dark', 'freeze', 'wind', 'vanish', 'ears', 'cheer', 'out', 'grow', 'crumble', 'ice', 'fine'];
 const SE_NAMES = ['pop', 'don', 'peka', 'chan', 'boo', 'whoosh', 'kira'];
 
 const args = process.argv.slice(2);
@@ -34,6 +35,7 @@ if (!Array.isArray(script.scenes) || script.scenes.length < 4 || script.scenes.l
 for (const [i, s] of (script.scenes || []).entries()) {
   if (!SCENE_TYPES.includes(s.type)) errors.push(`${i + 1}番目: type は ${SCENE_TYPES.join('/')} のいずれか`);
   if (!s.text || s.text.length > 80) errors.push(`${i + 1}番目: text は1〜80文字`);
+  if (s.event && !EVENTS.includes(s.event)) errors.push(`${i + 1}番目: event は ${EVENTS.join('/')} のいずれか`);
   if (s.se && !SE_NAMES.includes(s.se)) errors.push(`${i + 1}番目: se は ${SE_NAMES.join('/')} のいずれか`);
 }
 if (errors.length) {
@@ -44,7 +46,7 @@ if (errors.length) {
 // ── 効果音 ──
 const sfxDir = path.join(ROOT, 'public', 'sfx');
 if (!fs.existsSync(path.join(sfxDir, 'don.wav'))) {
-  execFileSync('python3', ['-m', 'shorts.sfx', sfxDir], {cwd: path.resolve(ROOT, '..'), stdio: 'inherit'});
+  execFileSync('python3', [path.join(ROOT, 'tools', 'sfx.py'), sfxDir], {stdio: 'inherit'});
 }
 
 // ── ナレーション ──
@@ -96,7 +98,7 @@ for (const [i, s] of script.scenes.entries()) {
     seconds = 0.6 + s.text.length * 0.11;
   }
   const frames = Math.max(45, Math.ceil((seconds + 0.25) * FPS));
-  scenes.push({type: s.type, text: s.text, telop: s.telop || '', se: s.se || null, audio, frames});
+  scenes.push({type: s.type, event: s.event || undefined, countdown: !!s.countdown, text: s.text, telop: s.telop || '', se: s.se || null, audio, frames});
 }
 const totalSec = scenes.reduce((a, s) => a + s.frames, 0) / FPS;
 console.log(`長さ: ${totalSec.toFixed(1)}秒`);
@@ -112,7 +114,16 @@ const episode = script.series ? hist.filter((h) => h.series === script.series).l
 const badge = script.series ? `${script.series} #${episode}` : '';
 
 // ── レンダリング ──
-const inputProps = {title: script.title, badge, cta: script.cta || 'チャンネル登録で毎日「もしも」', scenes};
+const seed = script.seed || `${script.date || ''}-${script.title}`;
+const inputProps = {
+  title: script.title,
+  badge,
+  cta: script.cta || 'チャンネル登録で毎日「もしも」',
+  zeroLabel: script.zero_label || 'ゼロ',
+  statusLabel: script.status_label || '',
+  seed,
+  scenes,
+};
 const serveUrl = await bundle({entryPoint: path.join(ROOT, 'src/index.ts')});
 const browserExecutable = process.env.CHROME_PATH || null;
 const composition = await selectComposition({serveUrl, id: 'Moshimo', inputProps, browserExecutable, chromiumOptions: {gl: 'swangle'}});

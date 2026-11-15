@@ -63,7 +63,7 @@ jobs:
           sudo apt-get install -y -q fonts-noto-cjk fonts-noto-cjk-extra
           npm ci
           npx remotion browser ensure
-          pip install -q -r ../requirements.txt
+          pip install -q -r requirements.txt
 
       - name: Prepare script
         env:
@@ -116,7 +116,7 @@ jobs:
             echo "::warning::MOSHIMO_YT_REFRESH_TOKEN が未設定のため投稿しません"
             exit 0
           fi
-          VID=$(python -m shorts.upload moshimo/out/video.mp4 moshimo/out/video.meta.json | tail -1)
+          VID=$(python moshimo/tools/upload.py moshimo/out/video.mp4 moshimo/out/video.meta.json | tail -1)
           echo "video_id=$VID" >> "$GITHUB_OUTPUT"
           echo "### 投稿完了: https://youtube.com/shorts/$VID" >> "$GITHUB_STEP_SUMMARY"
 
