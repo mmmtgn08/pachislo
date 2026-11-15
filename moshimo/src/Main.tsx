@@ -7,6 +7,12 @@ import {MoshimoProps, Scene, Style, ease, makeStyle, pop, prog} from './lib';
 
 const FONT = '"Noto Sans CJK JP", "Noto Sans JP", "IPAGothic", sans-serif';
 
+/** 一番長い行が収まるフォントサイズ */
+const fitSize = (text: string, maxPx: number, width: number) => {
+  const longest = Math.max(...text.split('\n').map((l) => [...l].reduce((a, ch) => a + (ch.charCodeAt(0) < 128 ? 0.55 : 1), 0)));
+  return Math.min(maxPx, Math.floor(width / Math.max(1, longest)));
+};
+
 const stroke = (w: number, color = '#000'): React.CSSProperties => ({
   WebkitTextStroke: `${w}px ${color}`,
   paintOrder: 'stroke fill',
@@ -26,7 +32,7 @@ const Title: React.FC<{title: string; badge: string; introFrames: number; st: St
             {badge}
           </div>
         )}
-        <div style={{fontFamily: FONT, fontWeight: 900, fontSize: 92, lineHeight: 1.2, color: st.title.fg, textAlign: 'center', whiteSpace: 'pre-line', ...stroke(10, st.title.stroke)}}>
+        <div style={{fontFamily: FONT, fontWeight: 900, fontSize: fitSize(title, 92, 860), lineHeight: 1.2, color: st.title.fg, textAlign: 'center', whiteSpace: 'pre', ...stroke(10, st.title.stroke)}}>
           {title}
         </div>
       </div>
@@ -42,7 +48,7 @@ const Telop: React.FC<{text: string; delay: number; st: Style}> = ({text, delay,
   const [first, ...rest] = text.split('\n');
   return (
     <div style={{position: 'absolute', left: 40, right: 40, top: 1080, display: 'flex', justifyContent: 'center', transform: `scale(${s})`}}>
-      <div style={{fontFamily: FONT, fontWeight: 900, fontSize: 84, lineHeight: 1.25, textAlign: 'center', ...stroke(14, st.telop.stroke)}}>
+      <div style={{fontFamily: FONT, fontWeight: 900, fontSize: fitSize(text, 84, 940), lineHeight: 1.25, textAlign: 'center', whiteSpace: 'pre', ...stroke(14, st.telop.stroke)}}>
         <div style={{color: st.telop.fg}}>{first}</div>
         {rest.length > 0 && <div style={{color: st.telop.emph}}>{rest.join('\n')}</div>}
       </div>
