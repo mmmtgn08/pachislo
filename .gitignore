@@ -1,0 +1,5 @@
+out/
+__pycache__/
+*.pyc
+tools/client_secret*.json
+script.json
