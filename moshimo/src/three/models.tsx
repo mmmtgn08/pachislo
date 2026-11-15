@@ -3,7 +3,6 @@ import React, {useLayoutEffect, useMemo} from 'react';
 import * as THREE from 'three';
 import {useThree} from '@react-three/fiber';
 import {RoundedBoxGeometry} from 'three/examples/jsm/geometries/RoundedBoxGeometry.js';
-import {RoomEnvironment} from 'three/examples/jsm/environments/RoomEnvironment.js';
 import {rnd} from '../lib';
 
 // ───────── 共通ジオメトリ(使い回して軽くする) ─────────
@@ -16,25 +15,17 @@ const cached = (key: string, make: () => THREE.BufferGeometry) => {
   }
   return g;
 };
-export const rbox = (w: number, h: number, d: number, r = 0.08, seg = 3) =>
+export const rbox = (w: number, h: number, d: number, r = 0.08, seg = 2) =>
   cached(`rb${w.toFixed(2)}_${h.toFixed(2)}_${d.toFixed(2)}_${r}_${seg}`, () => new RoundedBoxGeometry(w, h, d, seg, Math.min(r, w / 2, h / 2, d / 2)));
 
 // ───────── ライティング: 影と環境光 ─────────
 /** 全メッシュに影を設定し、柔らかい環境光(室内反射風)を当てる */
 export const Realism: React.FC<{envIntensity?: number}> = ({envIntensity = 0.3}) => {
   const {gl, scene, camera} = useThree();
-  const env = useMemo(() => {
-    const pmrem = new THREE.PMREMGenerator(gl);
-    const t = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
-    pmrem.dispose();
-    return t;
-  }, [gl]);
   gl.shadowMap.enabled = true;
-  gl.shadowMap.type = THREE.PCFSoftShadowMap;
+  gl.shadowMap.type = THREE.PCFShadowMap;
   gl.toneMapping = THREE.ACESFilmicToneMapping;
   gl.toneMappingExposure = 0.95;
-  scene.environment = env;
-  (scene as any).environmentIntensity = envIntensity;
   // 子のメッシュが作られた後(同じコミット内)に影の設定をして描き直す
   useLayoutEffect(() => {
     let changed = false;
@@ -51,7 +42,8 @@ export const Realism: React.FC<{envIntensity?: number}> = ({envIntensity = 0.3})
     });
     if (changed) gl.render(scene, camera);
   });
-  return null;
+  // 環境マップ(重い)の代わりに、空と地面からの柔らかい光
+  return <hemisphereLight args={['#dfeaff', '#5a4a3a', envIntensity * 3]} />;
 };
 
 /** 影を落とす太陽光 */
@@ -66,7 +58,7 @@ export const SunLight: React.FC<{color?: string; intensity?: number; position?: 
     color={color}
     intensity={intensity}
     castShadow
-    shadow-mapSize={[2048, 2048]}
+    shadow-mapSize={[1024, 1024]}
     shadow-bias={-0.0004}
     shadow-normalBias={0.02}
     shadow-camera-left={-size}
@@ -192,21 +184,21 @@ export const Building: React.FC<{w: number; h: number; color: string; lit?: bool
 export const Car: React.FC<{color: string; dir: number; smoke: number; lights?: boolean}> = ({color, dir, smoke, lights}) => (
   <group rotation={[0, dir > 0 ? 0 : Math.PI, 0]}>
     <mesh position={[0, 0.42, 0]} geometry={rbox(1.7, 0.42, 0.86, 0.14, 4)}>
-      <meshPhysicalMaterial color={color} roughness={0.28} metalness={0.4} clearcoat={1} clearcoatRoughness={0.15} />
+      <meshStandardMaterial color={color} roughness={0.25} metalness={0.35} />
     </mesh>
     <mesh position={[-0.12, 0.78, 0]} geometry={rbox(0.95, 0.36, 0.78, 0.14, 4)}>
-      <meshPhysicalMaterial color={color} roughness={0.28} metalness={0.4} clearcoat={1} />
+      <meshStandardMaterial color={color} roughness={0.25} metalness={0.35} />
     </mesh>
     {/* 窓 */}
     <mesh position={[-0.12, 0.8, 0]} geometry={rbox(0.97, 0.26, 0.8, 0.1, 3)}>
-      <meshPhysicalMaterial color="#1e293b" roughness={0.05} metalness={0.6} />
+      <meshStandardMaterial color="#1e293b" roughness={0.1} metalness={0.5} />
     </mesh>
     {/* タイヤ */}
     {[-0.55, 0.55].map((wx) =>
       [-0.42, 0.42].map((wz) => (
         <group key={`${wx}${wz}`} position={[wx, 0.2, wz]} rotation={[Math.PI / 2, 0, 0]}>
           <mesh>
-            <cylinderGeometry args={[0.2, 0.2, 0.14, 24]} />
+            <cylinderGeometry args={[0.2, 0.2, 0.14, 16]} />
             <meshStandardMaterial color="#111" roughness={0.9} />
           </mesh>
           <mesh position={[0, 0.072 * Math.sign(wz), 0]}>
@@ -220,7 +212,7 @@ export const Car: React.FC<{color: string; dir: number; smoke: number; lights?: 
     {[-0.28, 0.28].map((z) => (
       <React.Fragment key={z}>
         <mesh position={[0.86, 0.48, z]}>
-          <sphereGeometry args={[0.07, 12, 10]} />
+          <sphereGeometry args={[0.07, 8, 6]} />
           <meshStandardMaterial color="#fffbe6" emissive="#fff4c2" emissiveIntensity={lights ? 3 : 0.6} />
         </mesh>
         <mesh position={[-0.86, 0.48, z]}>
@@ -257,7 +249,7 @@ export const Tree: React.FC<{color: string; seed: string; scale?: number}> = ({c
       </mesh>
       {blobs.map((b, i) => (
         <mesh key={i} position={b.p}>
-          <sphereGeometry args={[b.r, 24, 18]} />
+          <sphereGeometry args={[b.r, 14, 10]} />
           <meshStandardMaterial color={new THREE.Color(color).multiplyScalar(1 - b.shade)} roughness={0.85} />
         </mesh>
       ))}
@@ -287,15 +279,15 @@ export const Human: React.FC<{
   const arm = (side: number) => (
     <group position={[side * 0.43, 1.52, 0]} rotation={[0, 0, side * (0.12 + armUp * 2.3)]}>
       <mesh position={[0, -0.27, 0]}>
-        <capsuleGeometry args={[0.09, 0.42, 8, 16]} />
+        <capsuleGeometry args={[0.09, 0.42, 4, 10]} />
         <meshStandardMaterial color={color} {...cloth} />
       </mesh>
       <mesh position={[0, -0.6, 0]}>
-        <capsuleGeometry args={[0.075, 0.22, 8, 16]} />
+        <capsuleGeometry args={[0.075, 0.22, 4, 10]} />
         <meshStandardMaterial color={skin} roughness={0.6} />
       </mesh>
       <mesh position={[0, -0.78, 0]}>
-        <sphereGeometry args={[0.085, 16, 12]} />
+        <sphereGeometry args={[0.085, 8, 6]} />
         <meshStandardMaterial color={skin} roughness={0.6} />
       </mesh>
     </group>
@@ -306,7 +298,7 @@ export const Human: React.FC<{
       {[-1, 1].map((s) => (
         <group key={s}>
           <mesh position={[s * 0.13, 0.5, 0]}>
-            <capsuleGeometry args={[0.11, 0.62, 8, 16]} />
+            <capsuleGeometry args={[0.11, 0.62, 4, 10]} />
             <meshStandardMaterial color={pants} {...cloth} />
           </mesh>
           <mesh position={[s * 0.13, 0.07, 0.06]} geometry={rbox(0.2, 0.13, 0.34, 0.06)}>
@@ -316,7 +308,7 @@ export const Human: React.FC<{
       ))}
       {/* 胴体 */}
       <mesh position={[0, 1.22, 0]}>
-        <capsuleGeometry args={[0.3, 0.55, 10, 24]} />
+        <capsuleGeometry args={[0.3, 0.55, 6, 16]} />
         <meshStandardMaterial color={color} {...cloth} />
       </mesh>
       {arm(-1)}
@@ -328,27 +320,27 @@ export const Human: React.FC<{
       </mesh>
       <group position={[0, 1.98, 0]} rotation={[0, 0, headShake]}>
         <mesh scale={[1, 1.1, 1]}>
-          <sphereGeometry args={[0.24, 32, 24]} />
+          <sphereGeometry args={[0.24, 20, 14]} />
           <meshStandardMaterial color={skin} roughness={0.55} />
         </mesh>
         {[-1, 1].map((s) => (
           <group key={s}>
             <mesh position={[s * 0.085, 0.03, 0.205]}>
-              <sphereGeometry args={[0.04, 16, 12]} />
+              <sphereGeometry args={[0.04, 8, 6]} />
               <meshStandardMaterial color="#ffffff" roughness={0.3} />
             </mesh>
             <mesh position={[s * 0.085, 0.03, 0.238]}>
-              <sphereGeometry args={[0.022, 12, 10]} />
+              <sphereGeometry args={[0.022, 8, 6]} />
               <meshStandardMaterial color="#1b130e" roughness={0.2} />
             </mesh>
             <mesh position={[s * 0.235, 0, 0]} scale={[0.5, 1, 0.8]}>
-              <sphereGeometry args={[0.06, 12, 10]} />
+              <sphereGeometry args={[0.06, 8, 6]} />
               <meshStandardMaterial color={skin} roughness={0.6} />
             </mesh>
           </group>
         ))}
         <mesh position={[0, -0.03, 0.235]}>
-          <sphereGeometry args={[0.03, 12, 10]} />
+          <sphereGeometry args={[0.03, 8, 6]} />
           <meshStandardMaterial color={skin} roughness={0.6} />
         </mesh>
         <mesh position={[0, -0.11, 0.2]} rotation={[0, 0, Math.PI]} scale={[1, 0.5, 1]}>
@@ -357,12 +349,12 @@ export const Human: React.FC<{
         </mesh>
         {/* 髪 */}
         <mesh position={[0, 0.06, -0.02]} scale={[1.06, 1.0, 1.08]}>
-          <sphereGeometry args={[0.25, 32, 24, 0, Math.PI * 2, 0, Math.PI * 0.55]} />
+          <sphereGeometry args={[0.25, 20, 12, 0, Math.PI * 2, 0, Math.PI * 0.55]} />
           <meshStandardMaterial color={hair} roughness={0.7} />
         </mesh>
         {longHair && (
           <mesh position={[0, -0.12, -0.12]} scale={[1.05, 1.3, 0.6]}>
-            <sphereGeometry args={[0.24, 24, 18]} />
+            <sphereGeometry args={[0.24, 16, 12]} />
             <meshStandardMaterial color={hair} roughness={0.7} />
           </mesh>
         )}

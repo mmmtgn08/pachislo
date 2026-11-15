@@ -162,7 +162,7 @@ export const Fire: React.FC<SceneProps> = ({frame, frames, style, event = 'out',
       <directionalLight position={[-4, 6, 5]} color="#9db4ff" intensity={0.9} />
       <Stars count={600} radius={40} />
       <Realism envIntensity={0.15} />
-      <pointLight position={[0, 1.2, 0]} color="#ff9a3c" intensity={40 * Math.min(level, 2) * flick} distance={14 + level * 4} castShadow shadow-mapSize={[512, 512]} shadow-bias={-0.002} />
+      <pointLight position={[0, 1.2, 0]} color="#ff9a3c" intensity={40 * Math.min(level, 2) * flick} distance={14 + level * 4} />
       <mesh rotation={[-Math.PI / 2, 0, 0]}>
         <circleGeometry args={[20, 64]} />
         <meshStandardMaterial color="#2d3a2a" roughness={1} />

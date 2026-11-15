@@ -1,6 +1,7 @@
 // 台本JSON → VOICEVOX ナレーション → Remotion で mp4 を書き出す
 //   node scripts/render.mjs topics/oxygen.json --out out/video.mp4 [--tts dummy]
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import {execFileSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
@@ -134,6 +135,7 @@ await renderMedia({
   serveUrl,
   codec: 'h264',
   crf: 20,
+  concurrency: Number(process.env.RENDER_CONCURRENCY || os.cpus().length),
   outputLocation: out,
   inputProps,
   browserExecutable,
