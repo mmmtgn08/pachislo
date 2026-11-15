@@ -104,7 +104,7 @@ const SceneView: React.FC<{scene: Scene; index: number; st: Style; showCountdown
   return (
     <AbsoluteFill>
       <AbsoluteFill style={tr.wrap}>
-        <ThreeCanvas width={width} height={height} camera={{fov: 50, position: [0, 0, 8]}}>
+        <ThreeCanvas width={width} height={height} shadows camera={{fov: 50, position: [0, 0, 8]}}>
           <Comp frame={frame} frames={scene.frames} style={st} event={scene.event} variant={(st.cam + index) % 3} />
         </ThreeCanvas>
       </AbsoluteFill>

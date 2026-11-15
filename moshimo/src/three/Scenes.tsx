@@ -1,6 +1,7 @@
 import React, {useMemo} from 'react';
 import * as THREE from 'three';
 import {Cam, Person, Stars} from './common';
+import {Building, Car, Ground, Realism, Road, Tree, rbox} from './models';
 import {Earth} from './Earth';
 import {Affected, Outdoor, darkK, eventAt, freezeK, iced} from './events';
 import {Style, ease, lerp, prog, rnd} from '../lib';
@@ -61,33 +62,6 @@ export const EarthEnd: React.FC<SceneProps> = ({frame, frames, event = 'crumble'
 };
 
 // ───────── 街 ─────────
-const Car: React.FC<{color: string; dir: number; smoke: number}> = ({color, dir, smoke}) => (
-  <group rotation={[0, dir > 0 ? 0 : Math.PI, 0]}>
-    <mesh position={[0, 0.35, 0]}>
-      <boxGeometry args={[1.6, 0.4, 0.8]} />
-      <meshStandardMaterial color={color} flatShading />
-    </mesh>
-    <mesh position={[-0.1, 0.7, 0]}>
-      <boxGeometry args={[0.9, 0.35, 0.7]} />
-      <meshStandardMaterial color="#cbd5e1" flatShading />
-    </mesh>
-    {[-0.5, 0.5].map((wx) =>
-      [-0.4, 0.4].map((wz) => (
-        <mesh key={`${wx}${wz}`} position={[wx, 0.15, wz]} rotation={[Math.PI / 2, 0, 0]}>
-          <cylinderGeometry args={[0.16, 0.16, 0.1, 10]} />
-          <meshStandardMaterial color="#111" />
-        </mesh>
-      ))
-    )}
-    {smoke > 0 && (
-      <mesh position={[-1.0, 0.4 + smoke * 0.6, 0]} scale={0.2 + smoke * 0.5}>
-        <icosahedronGeometry args={[0.5, 1]} />
-        <meshStandardMaterial color="#9ca3af" transparent opacity={0.7 * (1 - smoke)} flatShading />
-      </mesh>
-    )}
-  </group>
-);
-
 export const City: React.FC<SceneProps> = ({frame, frames, style, event, variant}) => {
   const at = eventAt(frames);
   const fz = event === 'freeze' ? freezeK(frame, at) : 0;
@@ -138,32 +112,11 @@ export const City: React.FC<SceneProps> = ({frame, frames, style, event, variant
     <>
       <Outdoor style={style} frame={frame} at={at} event={event} />
       <Cam pos={cpos} look={clook} fov={50} />
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.01, 0]}>
-        <planeGeometry args={[200, 200]} />
-        <meshStandardMaterial color={ground} />
-      </mesh>
-      <mesh rotation={[-Math.PI / 2, 0, 0]}>
-        <planeGeometry args={[200, 5]} />
-        <meshStandardMaterial color={iced('#4b5563', fz)} />
-      </mesh>
-      {new Array(40).fill(0).map((_, i) => (
-        <mesh key={i} rotation={[-Math.PI / 2, 0, 0]} position={[-60 + i * 3, 0.01, 0]}>
-          <planeGeometry args={[1.2, 0.15]} />
-          <meshBasicMaterial color="#f8fafc" />
-        </mesh>
-      ))}
+      <Ground color={ground} />
+      <Road color={iced('#4b5563', fz)} />
       {buildings.map((b, i) => (
         <Affected key={i} event={event === 'freeze' ? event : undefined} frame={frame} at={at + 6} id={`b${i}`} position={[b.x, b.h / 2, b.z]}>
-          <mesh>
-            <boxGeometry args={[b.w, b.h, b.w]} />
-            <meshStandardMaterial color={iced(b.c, fz)} flatShading />
-          </mesh>
-          {lightsOn && (
-            <mesh position={[0, 0, b.w / 2 + 0.01]}>
-              <planeGeometry args={[b.w * 0.7, b.h * 0.8]} />
-              <meshBasicMaterial color="#ffd27a" transparent opacity={dk > 0 ? 0.35 + 0.4 * dk : 0.6} />
-            </mesh>
-          )}
+          <Building w={b.w} h={b.h} color={iced(b.c, fz)} lit={lightsOn} seed={`${style.seed}b${i}`} />
         </Affected>
       ))}
       {cars.map((c, i) => {
@@ -172,7 +125,7 @@ export const City: React.FC<SceneProps> = ({frame, frames, style, event, variant
         const smoke = event === 'stall' && frame > at ? prog(frame, at, at + 25) : 0;
         return (
           <Affected key={i} event={event} frame={frame} at={at} id={`c${i}`} position={[x, 0, c.lane]}>
-            <Car color={iced(c.color, fz)} dir={c.dir} smoke={smoke} />
+            <Car color={iced(c.color, fz)} dir={c.dir} smoke={smoke} lights={lightsOn} />
           </Affected>
         );
       })}
@@ -208,15 +161,16 @@ export const Fire: React.FC<SceneProps> = ({frame, frames, style, event = 'out',
       <ambientLight intensity={0.35} />
       <directionalLight position={[-4, 6, 5]} color="#9db4ff" intensity={0.9} />
       <Stars count={600} radius={40} />
-      <pointLight position={[0, 1.2, 0]} color="#ff9a3c" intensity={40 * Math.min(level, 2) * flick} distance={14 + level * 4} />
+      <Realism envIntensity={0.15} />
+      <pointLight position={[0, 1.2, 0]} color="#ff9a3c" intensity={40 * Math.min(level, 2) * flick} distance={14 + level * 4} castShadow shadow-mapSize={[512, 512]} shadow-bias={-0.002} />
       <mesh rotation={[-Math.PI / 2, 0, 0]}>
-        <circleGeometry args={[20, 32]} />
-        <meshStandardMaterial color="#2d3a2a" />
+        <circleGeometry args={[20, 64]} />
+        <meshStandardMaterial color="#2d3a2a" roughness={1} />
       </mesh>
       {[0, 1, 2, 3].map((i) => (
         <mesh key={i} position={[0, 0.15, 0]} rotation={[0, (i * Math.PI) / 4, Math.PI / 2.3]}>
-          <cylinderGeometry args={[0.12, 0.14, 1.6, 8]} />
-          <meshStandardMaterial color="#6b3f1f" flatShading />
+          <cylinderGeometry args={[0.12, 0.14, 1.6, 16]} />
+          <meshStandardMaterial color="#6b3f1f" />
         </mesh>
       ))}
       {level > 0 &&
@@ -237,8 +191,8 @@ export const Fire: React.FC<SceneProps> = ({frame, frames, style, event = 'out',
           const t = ((frame - at) * 0.02 + i / 10) % 1;
           return (
             <mesh key={i} position={[Math.sin(i * 2.1 + t * 3) * 0.3, 0.4 + t * 3.5, 0]} scale={0.25 + t * 0.6}>
-              <icosahedronGeometry args={[1, 1]} />
-              <meshStandardMaterial color="#9ca3af" transparent opacity={0.5 * (1 - t)} flatShading depthWrite={false} />
+              <sphereGeometry args={[1, 20, 16]} />
+              <meshStandardMaterial color="#9ca3af" transparent opacity={0.5 * (1 - t)} depthWrite={false} />
             </mesh>
           );
         })}
@@ -269,23 +223,13 @@ export const Park: React.FC<SceneProps> = ({frame, frames, style, event = 'none'
     <>
       <Outdoor style={style} frame={frame} at={at} event={event} fogNear={15} fogFar={60} />
       <Cam pos={c.pos} look={c.look} />
-      <mesh rotation={[-Math.PI / 2, 0, 0]}>
-        <circleGeometry args={[40, 32]} />
-        <meshStandardMaterial color={iced('#86c26a', fz)} />
-      </mesh>
+      <Ground color={iced('#86c26a', fz)} size={80} circle />
       {new Array(8).fill(0).map((_, i) => {
         // カメラの通り道に入らないよう、人の後ろ側(半円)にだけ木を置く
         const a = Math.PI * (1.05 + (i / 7) * 0.9);
         return (
           <Affected key={i} event={event === 'freeze' ? event : undefined} frame={frame} at={at + 4} id={`t${i}`} position={[Math.cos(a) * 8, 0, Math.sin(a) * 6 - 3]}>
-            <mesh position={[0, 0.8, 0]}>
-              <cylinderGeometry args={[0.15, 0.2, 1.6, 6]} />
-              <meshStandardMaterial color="#7c4a1e" flatShading />
-            </mesh>
-            <mesh position={[0, 2.1, 0]}>
-              <icosahedronGeometry args={[1.0, 0]} />
-              <meshStandardMaterial color={iced('#2f8f3a', fz)} flatShading />
-            </mesh>
+            <Tree color={iced('#2f8f3a', fz)} seed={`t${i}`} />
           </Affected>
         );
       })}
@@ -346,12 +290,12 @@ export const Ocean: React.FC<SceneProps> = ({frame, frames, style, event = 'vani
       {rocks.map((r, i) => (
         <mesh key={i} position={[r.x, -3.5, r.z]} scale={r.s}>
           <dodecahedronGeometry args={[0.6, 0]} />
-          <meshStandardMaterial color="#6b5b45" flatShading />
+          <meshStandardMaterial color="#6b5b45" flatShading roughness={0.95} />
         </mesh>
       ))}
       <mesh position={[3, -3.4, -3]} rotation={[0, 0.6, 0.25]}>
         <boxGeometry args={[3.2, 0.8, 1]} />
-        <meshStandardMaterial color="#7f1d1d" flatShading />
+        <meshStandardMaterial color="#7f1d1d" />
       </mesh>
       {!(event === 'vanish' && k > 0.98) && (
         <mesh geometry={geo} position={[0, level, 0]} rotation={[-Math.PI / 2, 0, 0]}>
@@ -359,8 +303,8 @@ export const Ocean: React.FC<SceneProps> = ({frame, frames, style, event = 'vani
             color={fz > 0 ? iced('#1e6fd9', fz) : '#1e6fd9'}
             transparent
             opacity={event === 'vanish' ? 0.88 * (1 - k * 0.6) : fz > 0 ? 0.88 + 0.12 * fz : 0.88}
-            flatShading
-            roughness={0.3 + fz * 0.4}
+            roughness={0.12 + fz * 0.5}
+            metalness={0.1}
           />
         </mesh>
       )}
@@ -413,23 +357,21 @@ export const Crumble: React.FC<SceneProps> = ({frame, frames, style, variant}) =
         const rot = tt * 0.03 * t.spin;
         return (
           <group key={i} position={[t.gx, y, t.gz]} rotation={[rot, 0, rot * 0.7]}>
-            <mesh position={[0, -0.5, 0]}>
-              <boxGeometry args={[0.98, 1, 0.98]} />
-              <meshStandardMaterial color="#8b5a2b" flatShading />
+            <mesh position={[0, -0.5, 0]} geometry={rbox(0.98, 1, 0.98, 0.06, 2)}>
+              <meshStandardMaterial color="#8b5a2b" roughness={0.95} />
             </mesh>
-            <mesh position={[0, 0.02, 0]}>
-              <boxGeometry args={[0.98, 0.06, 0.98]} />
-              <meshStandardMaterial color={style.ground} flatShading />
+            <mesh position={[0, 0.02, 0]} geometry={rbox(0.98, 0.08, 0.98, 0.03, 2)}>
+              <meshStandardMaterial color={style.ground} roughness={0.9} />
             </mesh>
             {t.house && (
               <group position={[0, 0.05, 0]}>
                 <mesh position={[0, 0.3, 0]}>
                   <boxGeometry args={[0.6, 0.5, 0.6]} />
-                  <meshStandardMaterial color="#f1f5f9" flatShading />
+                  <meshStandardMaterial color="#f1f5f9" />
                 </mesh>
                 <mesh position={[0, 0.72, 0]} rotation={[0, Math.PI / 4, 0]}>
                   <coneGeometry args={[0.5, 0.4, 4]} />
-                  <meshStandardMaterial color="#dc2626" flatShading />
+                  <meshStandardMaterial color="#dc2626" />
                 </mesh>
               </group>
             )}

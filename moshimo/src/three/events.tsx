@@ -1,6 +1,7 @@
 import React, {useMemo} from 'react';
 import * as THREE from 'three';
 import {Sky, Stars} from './common';
+import {Realism, SunLight} from './models';
 import {Style, ease, prog, rnd} from '../lib';
 
 /** 出来事が起きるシーン内フレーム */
@@ -53,13 +54,14 @@ export const Outdoor: React.FC<{style: Style; frame: number; at: number; event?:
   }
   const night = style.tod === 'night' || dk > 0.5;
   const sunI = style.sun.intensity * (1 - dk * 0.92);
-  const amb = style.sun.ambient * (1 - dk * 0.75);
+  const amb = style.sun.ambient * 0.45 * (1 - dk * 0.75); // 環境光(Realism)があるので控えめ
   return (
     <>
       <Sky top={top} bottom={bottom} />
       <fog attach="fog" args={[bottom, fogNear, fogFar]} />
       <ambientLight intensity={amb} />
-      <directionalLight position={[10, 15, 8]} color={style.sun.color} intensity={sunI} />
+      <SunLight color={style.sun.color} intensity={sunI} />
+      <Realism envIntensity={0.3 * (1 - dk * 0.8)} />
       {(style.tod === 'night' || dk > 0) && <Stars count={900} radius={100} />}
       {night && <hemisphereLight args={['#5b6fa8', '#1a1f33', 0.4]} />}
       {fz > 0 && <Snow frame={frame} k={fz} />}
