@@ -1,0 +1,116 @@
+name: moshimo
+
+# 「もしも」3Dショート。Claude の定期タスクが台本JSONを渡して起動する。
+on:
+  workflow_dispatch:
+    inputs:
+      script_json:
+        description: "台本JSON(文字列)。空なら script_path を使う"
+        required: false
+        default: ""
+      script_path:
+        description: "台本JSONのパス(テスト用)"
+        required: false
+        default: "moshimo/topics/oxygen.json"
+      privacy:
+        description: "public / unlisted / private (空ならリポジトリ変数 MOSHIMO_YT_PRIVACY → public)"
+        required: false
+        default: ""
+      dry_run:
+        description: "true なら投稿せず動画だけ作る"
+        required: false
+        default: "false"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: moshimo
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    services:
+      voicevox:
+        image: voicevox/voicevox_engine:cpu-latest
+        ports:
+          - 50021:50021
+    defaults:
+      run:
+        working-directory: moshimo
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: moshimo/package-lock.json
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install fonts and packages
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y -q fonts-noto-cjk fonts-noto-cjk-extra
+          npm ci
+          npx remotion browser ensure
+          pip install -q -r ../requirements.txt
+
+      - name: Prepare script
+        env:
+          SCRIPT_JSON: ${{ inputs.script_json }}
+          SCRIPT_PATH: ${{ inputs.script_path }}
+        run: |
+          if [ -n "$SCRIPT_JSON" ]; then
+            printf '%s' "$SCRIPT_JSON" > script.json
+          else
+            cp "../$SCRIPT_PATH" script.json
+          fi
+
+      - name: Render
+        env:
+          VOICEVOX_URL: http://127.0.0.1:50021
+        run: node scripts/render.mjs script.json --out out/video.mp4
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: moshimo-video
+          path: moshimo/out/video.mp4
+          retention-days: 14
+
+      - name: Upload to YouTube
+        id: upload
+        if: inputs.dry_run != 'true'
+        working-directory: .
+        env:
+          YT_CLIENT_ID: ${{ secrets.YT_CLIENT_ID }}
+          YT_CLIENT_SECRET: ${{ secrets.YT_CLIENT_SECRET }}
+          YT_REFRESH_TOKEN: ${{ secrets.MOSHIMO_YT_REFRESH_TOKEN }}
+          YT_PRIVACY: ${{ inputs.privacy || vars.MOSHIMO_YT_PRIVACY }}
+        run: |
+          if [ -z "$YT_REFRESH_TOKEN" ]; then
+            echo "::warning::MOSHIMO_YT_REFRESH_TOKEN が未設定のため投稿しません"
+            exit 0
+          fi
+          VID=$(python -m shorts.upload moshimo/out/video.mp4 moshimo/out/video.meta.json | tail -1)
+          echo "video_id=$VID" >> "$GITHUB_OUTPUT"
+          echo "### 投稿完了: https://youtube.com/shorts/$VID" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Record history
+        if: inputs.script_json != '' && inputs.dry_run != 'true' && steps.upload.outputs.video_id != ''
+        run: |
+          node scripts/record.mjs script.json out/video.meta.json "${{ steps.upload.outputs.video_id }}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add history.jsonl topics/posted
+          git commit -m "Add moshimo short: $(date -u +%F)"
+          for i in 1 2 3 4; do
+            git pull --rebase -q && git push && exit 0
+            sleep $((i * 5))
+          done
+          exit 1

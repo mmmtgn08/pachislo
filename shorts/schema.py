@@ -9,7 +9,8 @@
   "description": "概要欄テキスト",
   "tags": ["パチスロ", "スロット"],
   "lines": [
-    {"speaker": "zundamon", "text": "読み上げ文", "telop": "表示テキスト(省略可)", "emphasis": false}
+    {"speaker": "zundamon", "text": "読み上げ文", "telop": "表示テキスト(省略可)",
+     "emphasis": false, "se": "don", "reaction": "草"}
   ]
 }
 """
@@ -18,6 +19,8 @@ from __future__ import annotations
 import json
 import re
 from pathlib import Path
+
+from .sfx import NAMES as SE_NAMES
 
 SPEAKERS = {
     # VOICEVOX のスピーカーID（ノーマルスタイル）
@@ -73,11 +76,19 @@ def validate(data: dict) -> dict:
         telop = ln.get("telop") or text
         if len(telop.replace("\n", "")) > MAX_TELOP:
             errors.append(f"{i}行目: telop が長すぎます(> {MAX_TELOP})。短い telop を別途指定してください")
+        se = ln.get("se") or None
+        if se and se not in SE_NAMES:
+            errors.append(f"{i}行目: se は {SE_NAMES} のいずれか")
+        reaction = (ln.get("reaction") or "").strip()
+        if len(reaction) > 6:
+            errors.append(f"{i}行目: reaction は6文字以内")
         out_lines.append({
             "speaker": sp,
             "text": text,
             "telop": telop.strip(),
             "emphasis": bool(ln.get("emphasis", False)),
+            "se": se,
+            "reaction": reaction,
         })
 
     total_chars = sum(len(l["text"]) for l in out_lines)
@@ -93,6 +104,9 @@ def validate(data: dict) -> dict:
         "theme": theme,
         "title": title,
         "hook": data["hook"].strip(),
+        "series": (data.get("series") or "").strip(),
+        "episode": data.get("episode"),
+        "cta": (data.get("cta") or "チャンネル登録で毎日ドパガキネタ！").strip(),
         "description": data.get("description", "").strip(),
         "tags": tags[:15],
         "lines": out_lines,

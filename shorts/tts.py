@@ -1,7 +1,7 @@
 """VOICEVOX エンジンでの音声合成。
 
 VOICEVOX_URL (既定 http://127.0.0.1:50021) で起動している VOICEVOX ENGINE を使う。
-engine="silent" のときは文字数から長さを見積もった無音を作る(ローカル確認用)。
+engine="dummy" のときは文字数から長さを見積もった仮の音を作る(ローカル確認用)。
 """
 from __future__ import annotations
 
@@ -46,14 +46,23 @@ def _voicevox(text: str, speaker_id: int, url: str) -> bytes:
     return r.content
 
 
-def _silent(text: str) -> bytes:
+def _dummy(text: str) -> bytes:
+    """ローカル確認用: 文字数ぶんの長さの小さな断続音(口パク確認用)。"""
+    import math
     seconds = 0.4 + len(text) * 0.11 / SPEED
+    n = int(SAMPLE_RATE * seconds)
+    frames = bytearray()
+    for i in range(n):
+        t = i / SAMPLE_RATE
+        env = 0.5 + 0.5 * math.sin(2 * math.pi * 6 * t)
+        v = int(6000 * env * math.sin(2 * math.pi * 220 * t))
+        frames += v.to_bytes(2, "little", signed=True)
     buf = io.BytesIO()
     with wave.open(buf, "wb") as w:
         w.setnchannels(1)
         w.setsampwidth(2)
         w.setframerate(SAMPLE_RATE)
-        w.writeframes(b"\x00\x00" * int(SAMPLE_RATE * seconds))
+        w.writeframes(bytes(frames))
     return buf.getvalue()
 
 
@@ -68,7 +77,7 @@ def synthesize(lines: list[dict], out_dir: Path, engine: str = "voicevox") -> li
         if engine == "voicevox":
             data = _voicevox(ln["text"], SPEAKERS[ln["speaker"]]["id"], url)
         else:
-            data = _silent(ln["text"])
+            data = _dummy(ln["text"])
         p = out_dir / f"line_{i:02d}.wav"
         p.write_bytes(data)
         paths.append(p)
@@ -80,20 +89,30 @@ def wav_duration(path: Path) -> float:
         return w.getnframes() / w.getframerate()
 
 
-def concat_wavs(paths: list[Path], out: Path, gap: float = 0.12) -> list[float]:
-    """wavを隙間付きで連結し、各区間の長さ(秒、隙間込み)を返す。"""
-    durations = []
-    with wave.open(str(out), "wb") as dst:
-        dst.setnchannels(1)
-        dst.setsampwidth(2)
-        dst.setframerate(SAMPLE_RATE)
-        silence = b"\x00\x00" * int(SAMPLE_RATE * gap)
-        for p in paths:
-            with wave.open(str(p), "rb") as src:
-                if src.getframerate() != SAMPLE_RATE or src.getnchannels() != 1 or src.getsampwidth() != 2:
-                    raise RuntimeError(f"想定外のwav形式: {p}")
-                frames = src.readframes(src.getnframes())
-                dst.writeframes(frames)
-                dst.writeframes(silence)
-                durations.append(src.getnframes() / SAMPLE_RATE + gap)
-    return durations
+def build_track(paths: list[Path], gap: float = 0.08, tail: float = 0.5):
+    """wavを隙間付きで連結する。(int16 array, 各行の開始秒, 各行の長さ秒) を返す。"""
+    from array import array
+    track = array("h")
+    starts, durations = [], []
+    silence = array("h", [0]) * int(SAMPLE_RATE * gap)
+    for p in paths:
+        with wave.open(str(p), "rb") as src:
+            if src.getframerate() != SAMPLE_RATE or src.getnchannels() != 1 or src.getsampwidth() != 2:
+                raise RuntimeError(f"想定外のwav形式: {p}")
+            data = array("h")
+            data.frombytes(src.readframes(src.getnframes()))
+        starts.append(len(track) / SAMPLE_RATE)
+        track.extend(data)
+        track.extend(silence)
+        durations.append(len(data) / SAMPLE_RATE + gap)
+    durations[-1] += tail
+    track.extend(array("h", [0]) * int(SAMPLE_RATE * tail))
+    return track, starts, durations
+
+
+def write_wav(track, out: Path) -> None:
+    with wave.open(str(out), "wb") as w:
+        w.setnchannels(1)
+        w.setsampwidth(2)
+        w.setframerate(SAMPLE_RATE)
+        w.writeframes(track.tobytes())

@@ -60,6 +60,6 @@ Claude Code に「定期タスクを登録して」と伝えると `content/DAIL
 ```
 pip install -r requirements.txt
 python -m shorts.schema content/examples/sample.json          # 台本チェック
-python -m shorts.build content/examples/sample.json --tts silent   # 無音で動画を作る
+python -m shorts.build content/examples/sample.json --tts dummy   # 仮の音で動画を作る
 ```
-VOICEVOX を起動していれば `--tts silent` を外すと音声付きになります。
+VOICEVOX を起動していれば `--tts dummy` を外すと音声付きになります。

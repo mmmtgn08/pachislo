@@ -16,6 +16,10 @@ on:
         description: "public / unlisted / private (空ならリポジトリ変数 YT_PRIVACY → public)"
         required: false
         default: ""
+      dry_run:
+        description: "true なら投稿せず動画だけ作る(見た目の確認用)"
+        required: false
+        default: "false"
 
 permissions:
   contents: write
@@ -70,15 +74,18 @@ jobs:
           YT_REFRESH_TOKEN: ${{ secrets.YT_REFRESH_TOKEN }}
           YT_PRIVACY: ${{ inputs.privacy || vars.YT_PRIVACY }}
           SCRIPT_JSON: ${{ inputs.script_json }}
+          DRY_RUN: ${{ inputs.dry_run }}
         run: |
           ARGS=""
-          if [ -n "$YT_REFRESH_TOKEN" ]; then
+          if [ "$DRY_RUN" = "true" ]; then
+            echo "::notice::dry_run のため投稿しません"
+          elif [ -n "$YT_REFRESH_TOKEN" ]; then
             ARGS="--upload"
           else
             echo "::warning::YouTube の Secrets が未設定のため、動画の作成のみ行います"
           fi
           # テスト用サンプルは履歴に残さない
-          if [ -n "$SCRIPT_JSON" ]; then ARGS="$ARGS --record"; fi
+          if [ -n "$SCRIPT_JSON" ] && [ "$DRY_RUN" != "true" ]; then ARGS="$ARGS --record"; fi
           python -m shorts.build script.json $ARGS
 
       - uses: actions/upload-artifact@v4
@@ -88,7 +95,7 @@ jobs:
           retention-days: 14
 
       - name: Commit history
-        if: inputs.script_json != ''
+        if: inputs.script_json != '' && inputs.dry_run != 'true'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"

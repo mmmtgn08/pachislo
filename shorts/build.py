@@ -1,7 +1,7 @@
 """台本JSON → 動画 → (任意で)YouTube投稿 → 履歴記録 までを行うCLI。
 
 使い方:
-  python -m shorts.build content/examples/sample.json --tts silent      # ローカル確認(無音)
+  python -m shorts.build content/examples/sample.json --tts dummy      # ローカル確認(無音)
   python -m shorts.build script.json --upload --record                  # 本番(Actions上)
 """
 from __future__ import annotations
@@ -13,17 +13,27 @@ import shutil
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
 
-from . import render, schema, tts
+from . import render, schema, sfx, tts
 
 ROOT = Path(__file__).resolve().parent.parent
 JST = timezone(timedelta(hours=9))
+
+
+def next_episode(series: str) -> int:
+    hist = ROOT / "content" / "history.jsonl"
+    n = 0
+    if hist.exists():
+        for line in hist.read_text(encoding="utf-8").splitlines():
+            if line.strip() and json.loads(line).get("series") == series:
+                n += 1
+    return n + 1
 
 
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("script")
     ap.add_argument("--out", default="out")
-    ap.add_argument("--tts", choices=["voicevox", "silent"], default="voicevox")
+    ap.add_argument("--tts", choices=["voicevox", "dummy"], default="voicevox")
     ap.add_argument("--upload", action="store_true")
     ap.add_argument("--record", action="store_true", help="content/history.jsonl と content/scripts/ に記録")
     args = ap.parse_args()
@@ -36,17 +46,25 @@ def main() -> None:
     if work.exists():
         shutil.rmtree(work)
 
+    if script.get("series") and not script.get("episode"):
+        script["episode"] = next_episode(script["series"])
+
     wavs = tts.synthesize(script["lines"], work / "voice", engine=args.tts)
-    audio = work / "voice.wav"
-    durations = tts.concat_wavs(wavs, audio)
-    total = sum(durations)
+    voice, starts, durations = tts.build_track(wavs)
+    mixed = voice[:]
+    for ln, st in zip(script["lines"], starts):
+        if ln["se"]:
+            sfx.mix_into(mixed, ln["se"], st, gain=0.7)
+    audio = work / "audio.wav"
+    tts.write_wav(mixed, audio)
+    total = starts[-1] + durations[-1]
     print(f"音声: {total:.1f}秒")
     if total > 59.5:
         raise SystemExit(f"動画が長すぎます({total:.1f}秒)。台本を短くしてください")
 
     bgm = ROOT / "assets" / "bgm.mp3"
     video = out / f"{date}.mp4"
-    render.render(script, durations, audio, video, work / "frames", bgm=bgm)
+    render.render(script, starts, durations, voice, audio, video, tts.SAMPLE_RATE, bgm=bgm)
     print(f"動画: {video}")
 
     video_id = None
@@ -63,7 +81,8 @@ def main() -> None:
         scripts_dir = ROOT / "content" / "scripts"
         scripts_dir.mkdir(parents=True, exist_ok=True)
         (scripts_dir / f"{date}.json").write_text(json.dumps(script, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-        entry = {"date": date, "theme": script["theme"], "title": script["title"], "hook": script["hook"],
+        entry = {"date": date, "theme": script["theme"], "series": script.get("series"),
+                 "episode": script.get("episode"), "title": script["title"], "hook": script["hook"],
                  "video_id": video_id, "seconds": round(total, 1)}
         with open(ROOT / "content" / "history.jsonl", "a", encoding="utf-8") as f:
             f.write(json.dumps(entry, ensure_ascii=False) + "\n")
