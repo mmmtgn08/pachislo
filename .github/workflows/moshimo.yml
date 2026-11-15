@@ -109,11 +109,11 @@ jobs:
         env:
           YT_CLIENT_ID: ${{ secrets.YT_CLIENT_ID }}
           YT_CLIENT_SECRET: ${{ secrets.YT_CLIENT_SECRET }}
-          YT_REFRESH_TOKEN: ${{ secrets.MOSHIMO_YT_REFRESH_TOKEN }}
+          YT_REFRESH_TOKEN: ${{ secrets.YT_REFRESH_TOKEN }}
           YT_PRIVACY: ${{ inputs.privacy || vars.MOSHIMO_YT_PRIVACY }}
         run: |
           if [ -z "$YT_REFRESH_TOKEN" ]; then
-            echo "::warning::MOSHIMO_YT_REFRESH_TOKEN が未設定のため投稿しません"
+            echo "::warning::YT_REFRESH_TOKEN が未設定のため投稿しません"
             exit 0
           fi
           VID=$(python moshimo/tools/upload.py moshimo/out/video.mp4 moshimo/out/video.meta.json | tail -1)

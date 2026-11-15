@@ -21,13 +21,11 @@
 | `moshimo/tools/` | 効果音の合成、YouTube 投稿、トークン取得 |
 
 ## セットアップ
-1. 「もしも」用の YouTube チャンネルを作る
-2. Google Cloud の OAuth クライアントは既存のものを流用。OAuth Playground でそのチャンネルのアカウントを選んでリフレッシュトークンを取得
-3. GitHub の Settings → Secrets and variables → Actions に登録
-   - `YT_CLIENT_ID` / `YT_CLIENT_SECRET`（登録済み）
-   - `MOSHIMO_YT_REFRESH_TOKEN`（新しいチャンネルのトークン）
+1. GitHub の Settings → Secrets and variables → Actions に登録（登録済み）
+   - `YT_CLIENT_ID` / `YT_CLIENT_SECRET` / `YT_REFRESH_TOKEN`（投稿先チャンネルのトークン）
    - Variables（任意）: `MOSHIMO_YT_PRIVACY`（`public` / `unlisted` / `private`）
-4. Actions → moshimo → Run workflow でテスト（`dry_run: true` なら投稿しない）
+2. 投稿先チャンネルを変えるときは、OAuth Playground でそのチャンネルのアカウントを選び直して `YT_REFRESH_TOKEN` を更新する
+3. Actions → moshimo → Run workflow でテスト（`dry_run: true` なら投稿しない）
 
 ## ローカルで試す
 ```
