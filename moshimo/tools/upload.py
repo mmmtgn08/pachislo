@@ -1,5 +1,7 @@
 """YouTube Data API v3 でショートをアップロードする。
 
+  python tools/upload.py out/video.mp4 out/video.meta.json   → 動画IDを出力
+
 必要な環境変数(GitHub Secrets):
   YT_CLIENT_ID, YT_CLIENT_SECRET, YT_REFRESH_TOKEN
 任意:
@@ -14,20 +16,14 @@ from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
 
-from .schema import SPEAKERS
-
 SCOPES = ["https://www.googleapis.com/auth/youtube.upload"]
 
 
 def build_description(script: dict) -> str:
-    if script.get("credits"):
-        credits = script["credits"]
-    else:
-        credits = sorted({SPEAKERS[l["speaker"]]["credit"] for l in script["lines"]})
+    credits = script.get("credits", [])
     tags = " ".join(f"#{t}" for t in script["tags"][:5])
-    notice = script.get("notice", "※パチンコ・パチスロは18歳になってから。適度に楽しむ遊びです。")
-    parts = [script["description"], "", tags, "", notice, "", " / ".join(credits)]
-    return "\n".join(p for p in parts if p is not None).strip()[:4900]
+    parts = [script.get("description", ""), "", tags, "", " / ".join(credits)]
+    return "\n".join(parts).strip()[:4900]
 
 
 def upload(video: Path, script: dict) -> str:
@@ -45,7 +41,7 @@ def upload(video: Path, script: dict) -> str:
             "title": script["title"][:100],
             "description": build_description(script),
             "tags": script["tags"],
-            "categoryId": "24",  # エンターテイメント
+            "categoryId": "28",  # 科学と技術
             "defaultLanguage": "ja",
             "defaultAudioLanguage": "ja",
         },
@@ -63,7 +59,6 @@ def upload(video: Path, script: dict) -> str:
 
 
 if __name__ == "__main__":
-    # python -m shorts.upload video.mp4 meta.json  → 動画IDを出力
     import json
     import sys
 

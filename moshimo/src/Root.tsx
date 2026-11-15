@@ -4,11 +4,20 @@ import {Main} from './Main';
 import {FPS, MoshimoProps} from './lib';
 import sample from '../topics/oxygen.json';
 
-// スタジオでのプレビュー用: 文字数から長さを見積もる
-const estimate = (p: any): MoshimoProps => ({
-  ...p,
-  scenes: p.scenes.map((s: any) => ({...s, frames: s.frames ?? Math.ceil((0.6 + s.text.length * 0.11) * FPS)})),
-});
+// 台本(snake_case)を Composition の props(camelCase)に変換する。
+// CLI の --props は defaultProps とマージされるため、defaultProps には snake_case を残さない。
+const estimate = (p: any): MoshimoProps => {
+  const {zero_label, status_label, youtube_title, description, tags, date, series, ...rest} = p;
+  return {
+    ...rest,
+    zeroLabel: zero_label ?? p.zeroLabel ?? 'ゼロ',
+    statusLabel: status_label ?? p.statusLabel ?? '',
+    seed: zero_label !== undefined ? `${date}-${p.title}` : p.seed ?? `${date}-${p.title}`,
+    badge: series ? `${series} #1` : p.badge ?? '',
+    cta: p.cta ?? 'チャンネル登録で毎日「もしも」',
+    scenes: p.scenes.map((s: any) => ({...s, frames: s.frames ?? Math.ceil((0.6 + s.text.length * 0.11) * FPS)})),
+  };
+};
 
 export const Root: React.FC = () => (
   <Composition

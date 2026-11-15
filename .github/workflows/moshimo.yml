@@ -20,6 +20,10 @@ on:
         description: "true なら投稿せず動画だけ作る"
         required: false
         default: "false"
+      preview:
+        description: "true なら動画を previews ブランチに置く(チャットで確認する用)"
+        required: false
+        default: "false"
 
 permissions:
   contents: write
@@ -59,7 +63,7 @@ jobs:
           sudo apt-get install -y -q fonts-noto-cjk fonts-noto-cjk-extra
           npm ci
           npx remotion browser ensure
-          pip install -q -r ../requirements.txt
+          pip install -q -r requirements.txt
 
       - name: Prepare script
         env:
@@ -83,6 +87,21 @@ jobs:
           path: moshimo/out/video.mp4
           retention-days: 14
 
+      - name: Publish preview
+        if: inputs.preview == 'true'
+        working-directory: .
+        run: |
+          cp moshimo/out/video.mp4 "$RUNNER_TEMP/moshimo-preview.mp4"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -q --orphan previews
+          git rm -rfq . >/dev/null
+          git clean -fdxq
+          cp "$RUNNER_TEMP/moshimo-preview.mp4" moshimo-preview.mp4
+          git add moshimo-preview.mp4
+          git commit -qm "Preview: ${{ github.run_id }}"
+          git push -qf origin previews
+
       - name: Upload to YouTube
         id: upload
         if: inputs.dry_run != 'true'
@@ -90,14 +109,14 @@ jobs:
         env:
           YT_CLIENT_ID: ${{ secrets.YT_CLIENT_ID }}
           YT_CLIENT_SECRET: ${{ secrets.YT_CLIENT_SECRET }}
-          YT_REFRESH_TOKEN: ${{ secrets.MOSHIMO_YT_REFRESH_TOKEN }}
+          YT_REFRESH_TOKEN: ${{ secrets.YT_REFRESH_TOKEN }}
           YT_PRIVACY: ${{ inputs.privacy || vars.MOSHIMO_YT_PRIVACY }}
         run: |
           if [ -z "$YT_REFRESH_TOKEN" ]; then
-            echo "::warning::MOSHIMO_YT_REFRESH_TOKEN が未設定のため投稿しません"
+            echo "::warning::YT_REFRESH_TOKEN が未設定のため投稿しません"
             exit 0
           fi
-          VID=$(python -m shorts.upload moshimo/out/video.mp4 moshimo/out/video.meta.json | tail -1)
+          VID=$(python moshimo/tools/upload.py moshimo/out/video.mp4 moshimo/out/video.meta.json | tail -1)
           echo "video_id=$VID" >> "$GITHUB_OUTPUT"
           echo "### 投稿完了: https://youtube.com/shorts/$VID" >> "$GITHUB_STEP_SUMMARY"
 
