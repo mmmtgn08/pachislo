@@ -274,9 +274,10 @@ export const Park: React.FC<SceneProps> = ({frame, frames, style, event = 'none'
         <meshStandardMaterial color={iced('#86c26a', fz)} />
       </mesh>
       {new Array(8).fill(0).map((_, i) => {
-        const a = (i / 8) * Math.PI * 2;
+        // カメラの通り道に入らないよう、人の後ろ側(半円)にだけ木を置く
+        const a = Math.PI * (1.05 + (i / 7) * 0.9);
         return (
-          <Affected key={i} event={event === 'freeze' ? event : undefined} frame={frame} at={at + 4} id={`t${i}`} position={[Math.cos(a) * 9, 0, Math.sin(a) * 9 - 4]}>
+          <Affected key={i} event={event === 'freeze' ? event : undefined} frame={frame} at={at + 4} id={`t${i}`} position={[Math.cos(a) * 8, 0, Math.sin(a) * 6 - 3]}>
             <mesh position={[0, 0.8, 0]}>
               <cylinderGeometry args={[0.15, 0.2, 1.6, 6]} />
               <meshStandardMaterial color="#7c4a1e" flatShading />
