@@ -20,9 +20,13 @@ SCOPES = ["https://www.googleapis.com/auth/youtube.upload"]
 
 
 def build_description(script: dict) -> str:
-    credits = sorted({SPEAKERS[l["speaker"]]["credit"] for l in script["lines"]})
+    if script.get("credits"):
+        credits = script["credits"]
+    else:
+        credits = sorted({SPEAKERS[l["speaker"]]["credit"] for l in script["lines"]})
     tags = " ".join(f"#{t}" for t in script["tags"][:5])
-    parts = [script["description"], "", tags, "", "※パチンコ・パチスロは18歳になってから。適度に楽しむ遊びです。", "", " / ".join(credits)]
+    notice = script.get("notice", "※パチンコ・パチスロは18歳になってから。適度に楽しむ遊びです。")
+    parts = [script["description"], "", tags, "", notice, "", " / ".join(credits)]
     return "\n".join(p for p in parts if p is not None).strip()[:4900]
 
 
@@ -56,3 +60,13 @@ def upload(video: Path, script: dict) -> str:
     while resp is None:
         _, resp = req.next_chunk()
     return resp["id"]
+
+
+if __name__ == "__main__":
+    # python -m shorts.upload video.mp4 meta.json  → 動画IDを出力
+    import json
+    import sys
+
+    meta = json.load(open(sys.argv[2], encoding="utf-8"))
+    vid = upload(Path(sys.argv[1]), meta)
+    print(vid)

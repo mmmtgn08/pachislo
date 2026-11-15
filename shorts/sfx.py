@@ -95,3 +95,25 @@ def mix_into(track: array, name: str, start_sec: float, gain: float = 1.0) -> No
             break
         x = track[j] + int(v * gain * 32767)
         track[j] = 32767 if x > 32767 else -32768 if x < -32768 else x
+
+
+def export_all(out_dir: str) -> None:
+    """全効果音を wav で書き出す(Remotion 版で使用)。"""
+    import os
+    import wave
+
+    os.makedirs(out_dir, exist_ok=True)
+    for name in NAMES:
+        tr = array("h", [0]) * len(get(name))
+        mix_into(tr, name, 0.0, gain=0.8)
+        with wave.open(os.path.join(out_dir, f"{name}.wav"), "wb") as w:
+            w.setnchannels(1)
+            w.setsampwidth(2)
+            w.setframerate(SR)
+            w.writeframes(tr.tobytes())
+
+
+if __name__ == "__main__":
+    import sys
+
+    export_all(sys.argv[1])
