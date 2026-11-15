@@ -1,0 +1,102 @@
+name: daily-short
+
+# Claude の定期タスクが台本JSONを渡して起動する。手動実行も可(Actions タブ → Run workflow)。
+on:
+  workflow_dispatch:
+    inputs:
+      script_json:
+        description: "台本JSON(文字列)。空なら script_path を使う"
+        required: false
+        default: ""
+      script_path:
+        description: "リポジトリ内の台本JSONパス(テスト用)"
+        required: false
+        default: "content/examples/sample.json"
+      privacy:
+        description: "public / unlisted / private (空ならリポジトリ変数 YT_PRIVACY → public)"
+        required: false
+        default: ""
+
+permissions:
+  contents: write
+
+concurrency:
+  group: daily-short
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    services:
+      voicevox:
+        image: voicevox/voicevox_engine:cpu-latest
+        ports:
+          - 50021:50021
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install system packages
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y -q ffmpeg fonts-noto-cjk fonts-noto-cjk-extra
+
+      - name: Install Python packages
+        run: pip install -r requirements.txt
+
+      - name: Prepare script
+        env:
+          SCRIPT_JSON: ${{ inputs.script_json }}
+          SCRIPT_PATH: ${{ inputs.script_path }}
+        run: |
+          if [ -n "$SCRIPT_JSON" ]; then
+            printf '%s' "$SCRIPT_JSON" > script.json
+          else
+            cp "$SCRIPT_PATH" script.json
+          fi
+          python -m shorts.schema script.json
+
+      - name: Build and upload
+        env:
+          VOICEVOX_URL: http://127.0.0.1:50021
+          CHANNEL_NAME: ${{ vars.CHANNEL_NAME }}
+          YT_CLIENT_ID: ${{ secrets.YT_CLIENT_ID }}
+          YT_CLIENT_SECRET: ${{ secrets.YT_CLIENT_SECRET }}
+          YT_REFRESH_TOKEN: ${{ secrets.YT_REFRESH_TOKEN }}
+          YT_PRIVACY: ${{ inputs.privacy || vars.YT_PRIVACY }}
+          SCRIPT_JSON: ${{ inputs.script_json }}
+        run: |
+          ARGS=""
+          if [ -n "$YT_REFRESH_TOKEN" ]; then
+            ARGS="--upload"
+          else
+            echo "::warning::YouTube の Secrets が未設定のため、動画の作成のみ行います"
+          fi
+          # テスト用サンプルは履歴に残さない
+          if [ -n "$SCRIPT_JSON" ]; then ARGS="$ARGS --record"; fi
+          python -m shorts.build script.json $ARGS
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: short-video
+          path: out/*.mp4
+          retention-days: 14
+
+      - name: Commit history
+        if: inputs.script_json != ''
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add content/history.jsonl content/scripts
+          git diff --cached --quiet && exit 0
+          git commit -m "Add short: $(date -u +%F)"
+          for i in 1 2 3 4; do
+            git pull --rebase -q && git push && exit 0
+            sleep $((i * 5))
+          done
+          exit 1
