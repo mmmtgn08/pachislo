@@ -14,8 +14,8 @@ const SPEAKER = Number(process.env.VOICE_SPEAKER || 13); // 13 = 青山龍星
 const SPEAKER_CREDIT = process.env.VOICE_CREDIT || 'VOICEVOX:青山龍星';
 const SPEED = Number(process.env.VOICE_SPEED || 1.15);
 const VOICEVOX = (process.env.VOICEVOX_URL || 'http://127.0.0.1:50021').replace(/\/$/, '');
-const SCENE_TYPES = ['earthIntro', 'city', 'fire', 'park', 'ocean', 'crumble', 'earthEnd'];
-const EVENTS = ['none', 'stall', 'float', 'dark', 'freeze', 'wind', 'vanish', 'ears', 'cheer', 'out', 'grow', 'crumble', 'ice', 'fine'];
+const SCENE_TYPES = ['earthIntro', 'city', 'fire', 'park', 'ocean', 'crumble', 'earthEnd', 'space', 'sky', 'underwater', 'room', 'animals'];
+const EVENTS = ['none', 'stall', 'float', 'dark', 'freeze', 'wind', 'vanish', 'ears', 'cheer', 'out', 'grow', 'rain', 'crumble', 'ice', 'fine'];
 const SE_NAMES = ['pop', 'don', 'peka', 'chan', 'boo', 'whoosh', 'kira'];
 
 const args = process.argv.slice(2);
@@ -99,7 +99,7 @@ for (const [i, s] of script.scenes.entries()) {
     seconds = 0.6 + s.text.length * 0.11;
   }
   const frames = Math.max(45, Math.ceil((seconds + 0.25) * FPS));
-  scenes.push({type: s.type, event: s.event || undefined, countdown: !!s.countdown, text: s.text, telop: s.telop || '', se: s.se || null, audio, frames});
+  scenes.push({type: s.type, event: s.event || undefined, countdown: !!s.countdown, time: typeof s.time === 'number' ? s.time : undefined, text: s.text, telop: s.telop || '', se: s.se || null, audio, frames});
 }
 const totalSec = scenes.reduce((a, s) => a + s.frames, 0) / FPS;
 console.log(`長さ: ${totalSec.toFixed(1)}秒`);
@@ -127,6 +127,16 @@ const inputProps = {
   zeroLabel: script.zero_label || 'ゼロ',
   statusLabel: script.status_label || '',
   seed,
+  // 左の経過時間タイマー。timer_duration: 0 で非表示
+  timer:
+    script.timer_duration === 0
+      ? null
+      : {
+          duration: Number(script.timer_duration ?? 5),
+          decimals: Math.max(0, Math.min(2, Number(script.timer_decimals ?? 1))),
+          unit: script.timer_unit || '秒',
+          label: script.timer_label || '経過',
+        },
   bgm: 'bgm.wav',
   bgmVolume: Number(process.env.BGM_VOLUME || 0.15),
   scenes,

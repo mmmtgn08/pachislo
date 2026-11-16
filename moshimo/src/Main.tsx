@@ -64,7 +64,7 @@ const Countdown: React.FC<{at: number; label: string}> = ({at, label}) => {
   const local = frame < at ? frame % step : frame - at;
   const s = pop(local, 0, 6);
   return (
-    <div style={{position: 'absolute', left: 0, right: 0, top: 560, display: 'flex', justifyContent: 'center', transform: `scale(${s})`}}>
+    <div style={{position: 'absolute', left: 0, right: 0, top: 700, display: 'flex', justifyContent: 'center', transform: `scale(${s})`}}>
       <div style={{fontFamily: FONT, fontWeight: 900, fontSize: n ? 300 : 140, color: n ? '#fff' : '#ff2d2d', ...stroke(18)}}>{n ? n : label}</div>
     </div>
   );
@@ -75,6 +75,27 @@ const StatusBadge: React.FC<{label: string}> = ({label}) => (
     {label}
   </div>
 );
+
+/** 左の経過時間タイマー(物語の中の時間) */
+const Timer: React.FC<{value: number; total: number; decimals: number; unit: string; label: string; done: boolean}> = ({value, total, decimals, unit, label, done}) => {
+  const frame = useCurrentFrame();
+  const p = Math.min(1, value / Math.max(0.0001, total));
+  const r = 54, circ = 2 * Math.PI * r;
+  return (
+    <div style={{position: 'absolute', left: 34, top: 470, display: 'flex', alignItems: 'center', gap: 10}}>
+      <svg width={128} height={128} viewBox="0 0 128 128">
+        <circle cx={64} cy={64} r={r} fill="rgba(0,0,0,0.55)" stroke="rgba(255,255,255,0.25)" strokeWidth={10} />
+        <circle cx={64} cy={64} r={r} fill="none" stroke={done ? '#22c55e' : '#ff3b3b'} strokeWidth={10} strokeLinecap="round"
+          strokeDasharray={`${circ * p} ${circ}`} transform="rotate(-90 64 64)" />
+        <text x={64} y={74} textAnchor="middle" fontFamily={FONT} fontWeight={900} fontSize={30} fill="#fff">{label}</text>
+      </svg>
+      <div style={{fontFamily: FONT, fontWeight: 900, color: done ? '#86efac' : '#ffffff', ...stroke(12), lineHeight: 1}}>
+        <span style={{fontSize: 150, fontVariantNumeric: 'tabular-nums'}}>{value.toFixed(decimals)}</span>
+        <span style={{fontSize: 70, marginLeft: 6}}>{unit}</span>
+      </div>
+    </div>
+  );
+};
 
 /** シーン切り替え演出 */
 const useTransition = (kind: Style['transition'], enabled: boolean): {wrap: React.CSSProperties; overlay: React.ReactNode} => {
@@ -127,7 +148,7 @@ const Cta: React.FC<{text: string}> = ({text}) => {
   );
 };
 
-export const Main: React.FC<MoshimoProps> = ({title, badge, cta, zeroLabel, statusLabel, seed, bgm, bgmVolume = 0.15, scenes}) => {
+export const Main: React.FC<MoshimoProps> = ({title, badge, cta, zeroLabel, statusLabel, seed, timer, bgm, bgmVolume = 0.15, scenes}) => {
   const frame = useCurrentFrame();
   const st = makeStyle(seed || title);
   let acc = 0;
@@ -140,6 +161,26 @@ export const Main: React.FC<MoshimoProps> = ({title, badge, cta, zeroLabel, stat
   if (cdIdx < 0) cdIdx = scenes.findIndex((s, i) => i > 0 && s.type !== 'earthEnd');
   const zeroAt = cdIdx >= 0 ? starts[cdIdx] + eventAt(scenes[cdIdx].frames) : Infinity;
   const last = scenes.length - 1;
+  // 物語の時間: 「ゼロ」の瞬間=0 → 各場面の time → 最後の場面の開始で duration に到達
+  let storyTime = 0;
+  if (timer && frame >= zeroAt) {
+    const anchors: [number, number][] = [[zeroAt, 0]];
+    scenes.forEach((s, i) => {
+      if (s.time !== undefined && starts[i] > zeroAt) anchors.push([starts[i], s.time]);
+    });
+    const endFrame = scenes[last].type === 'earthEnd' ? starts[last] : starts[last] + scenes[last].frames;
+    if (!anchors.some(([, t]) => t >= timer.duration)) anchors.push([Math.max(endFrame, zeroAt + 1), timer.duration]);
+    anchors.sort((a, b) => a[0] - b[0]);
+    storyTime = anchors[anchors.length - 1][1];
+    for (let k = 0; k < anchors.length - 1; k++) {
+      const [f0, t0] = anchors[k], [f1, t1] = anchors[k + 1];
+      if (frame < f1) {
+        storyTime = t0 + (t1 - t0) * Math.max(0, (frame - f0) / Math.max(1, f1 - f0));
+        break;
+      }
+    }
+    storyTime = Math.min(storyTime, timer.duration);
+  }
   return (
     <AbsoluteFill style={{background: '#000'}}>
       {bgm && <Audio src={staticFile(bgm)} volume={bgmVolume} />}
@@ -150,6 +191,9 @@ export const Main: React.FC<MoshimoProps> = ({title, badge, cta, zeroLabel, stat
       ))}
       <Title title={title} badge={badge} introFrames={scenes[0].frames} st={st} />
       {statusLabel && frame >= zeroAt && <StatusBadge label={statusLabel} />}
+      {timer && frame >= zeroAt && (
+        <Timer value={storyTime} total={timer.duration} decimals={timer.decimals} unit={timer.unit} label={timer.label} done={storyTime >= timer.duration} />
+      )}
       <Sequence from={starts[last]} durationInFrames={scenes[last].frames}>
         <Cta text={cta} />
       </Sequence>
