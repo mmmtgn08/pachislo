@@ -43,6 +43,7 @@ export type Scene = {
   audio?: string | null;
   se?: string | null;
   countdown?: boolean;
+  time?: number; // この場面が始まる時点の「物語の中の時間」(タイマー表示用)
 };
 
 export type MoshimoProps = {
@@ -52,6 +53,7 @@ export type MoshimoProps = {
   zeroLabel: string; // カウントダウン後の表示 例: 「酸素 0%」
   statusLabel: string; // 右上バッジ 例: 「O₂ 0%」
   seed: string;
+  timer?: {duration: number; decimals: number; unit: string; label: string} | null; // 左の経過時間タイマー
   bgm?: string; // public/ 内の BGM ファイル
   bgmVolume?: number;
   scenes: Scene[];

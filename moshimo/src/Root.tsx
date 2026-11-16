@@ -7,7 +7,7 @@ import sample from '../topics/oxygen.json';
 // 台本(snake_case)を Composition の props(camelCase)に変換する。
 // CLI の --props は defaultProps とマージされるため、defaultProps には snake_case を残さない。
 const estimate = (p: any): MoshimoProps => {
-  const {zero_label, status_label, youtube_title, description, tags, date, series, ...rest} = p;
+  const {zero_label, status_label, youtube_title, description, tags, date, series, timer_duration, timer_decimals, timer_unit, timer_label, ...rest} = p;
   return {
     ...rest,
     zeroLabel: zero_label ?? p.zeroLabel ?? 'ゼロ',
@@ -15,6 +15,12 @@ const estimate = (p: any): MoshimoProps => {
     seed: zero_label !== undefined ? `${date}-${p.title}` : p.seed ?? `${date}-${p.title}`,
     badge: series ? `${series} #1` : p.badge ?? '',
     cta: p.cta ?? 'チャンネル登録で毎日「もしも」',
+    timer:
+      timer_duration === 0
+        ? null
+        : timer_duration !== undefined || p.timer === undefined
+          ? {duration: timer_duration ?? 5, decimals: timer_decimals ?? 1, unit: timer_unit ?? '秒', label: timer_label ?? '経過'}
+          : p.timer,
     scenes: p.scenes.map((s: any) => ({...s, frames: s.frames ?? Math.ceil((0.6 + s.text.length * 0.11) * FPS)})),
   };
 };
