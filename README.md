@@ -14,7 +14,9 @@
 | `moshimo/GUIDE.md` | 編集方針・事実のルール・使えるシーン一覧。**ここを書き換えると動画の中身が変わる** |
 | `moshimo/DAILY_PROMPT.md` | 定期タスクに登録するプロンプト |
 | `moshimo/history.jsonl` | 投稿履歴（自動追記） |
-| `moshimo/requests.md` | 視聴者のリクエスト（任意。書いておくと優先して作る） |
+| `moshimo/requests.md` | 視聴者のリクエスト（コメントから自動で追記。手で書いてもOK） |
+| `moshimo/COMMENTS.md` | コメント返信のルール |
+| `moshimo/comments/` | 未対応コメントの受信箱と対応済みID（投稿者名は保存しない） |
 | `moshimo/topics/` | 台本の例と、投稿した台本のアーカイブ（`posted/`） |
 | `moshimo/src/` | 3D シーンと画面の演出（Remotion） |
 | `moshimo/scripts/render.mjs` | 台本 → ナレーション → 動画 |
@@ -26,6 +28,7 @@
    - Variables（任意）: `MOSHIMO_YT_PRIVACY`（`public` / `unlisted` / `private`）
 2. 投稿先チャンネルを変えるときは、OAuth Playground でそのチャンネルのアカウントを選び直して `YT_REFRESH_TOKEN` を更新する
 3. Actions → moshimo → Run workflow でテスト（`dry_run: true` なら投稿しない）
+4. コメント返信を使うには、トークンに `youtube.upload` と `youtube.force-ssl` の2つの権限が必要
 
 ## ローカルで試す
 ```

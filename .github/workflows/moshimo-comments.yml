@@ -1,0 +1,67 @@
+name: moshimo-comments
+
+# コメントの取得(fetch)と返信(reply)。Claude の定期タスクが起動する。
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "fetch(未対応コメントを取得) / reply(返信を投稿)"
+        required: true
+        default: "fetch"
+      plan_json:
+        description: "reply のときの返信計画JSON"
+        required: false
+        default: ""
+
+permissions:
+  contents: write
+
+concurrency:
+  group: moshimo-comments
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: moshimo
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - run: pip install -q -r requirements.txt
+
+      - name: Fetch or reply
+        env:
+          YT_CLIENT_ID: ${{ secrets.YT_CLIENT_ID }}
+          YT_CLIENT_SECRET: ${{ secrets.YT_CLIENT_SECRET }}
+          YT_REFRESH_TOKEN: ${{ secrets.YT_REFRESH_TOKEN }}
+          MODE: ${{ inputs.mode }}
+          PLAN_JSON: ${{ inputs.plan_json }}
+        run: |
+          if [ "$MODE" = "fetch" ]; then
+            python tools/comments.py fetch
+          elif [ "$MODE" = "reply" ]; then
+            printf '%s' "$PLAN_JSON" > "$RUNNER_TEMP/plan.json"
+            python tools/comments.py reply "$RUNNER_TEMP/plan.json"
+          else
+            echo "mode は fetch か reply"; exit 1
+          fi
+
+      - name: Commit
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add comments requests.md 2>/dev/null || git add comments
+          git diff --cached --quiet && exit 0
+          git commit -m "Comments: ${{ inputs.mode }} $(date -u +%F)"
+          for i in 1 2 3 4; do
+            git pull --rebase -q && git push && exit 0
+            sleep $((i * 5))
+          done
+          exit 1
