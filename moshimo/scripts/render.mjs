@@ -1,6 +1,7 @@
 // 台本JSON → VOICEVOX ナレーション → Remotion で mp4 を書き出す
 //   node scripts/render.mjs topics/oxygen.json --out out/video.mp4 [--tts dummy]
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import {execFileSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
@@ -107,6 +108,10 @@ if (totalSec > 59.5) {
   process.exit(1);
 }
 
+// ── BGM(毎回シードから合成。著作権フリー) ──
+const bgmSeed = script.seed || `${script.date || ''}-${script.title}`;
+execFileSync('python3', [path.join(ROOT, 'tools', 'bgm.py'), path.join(ROOT, 'public', 'bgm.wav'), '--seconds', String(Math.ceil(totalSec) + 1), '--seed', bgmSeed], {stdio: 'inherit'});
+
 // ── シリーズ回数 ──
 const histPath = path.join(ROOT, 'history.jsonl');
 const hist = fs.existsSync(histPath) ? fs.readFileSync(histPath, 'utf8').split('\n').filter(Boolean).map((l) => JSON.parse(l)) : [];
@@ -122,6 +127,8 @@ const inputProps = {
   zeroLabel: script.zero_label || 'ゼロ',
   statusLabel: script.status_label || '',
   seed,
+  bgm: 'bgm.wav',
+  bgmVolume: Number(process.env.BGM_VOLUME || 0.15),
   scenes,
 };
 const serveUrl = await bundle({entryPoint: path.join(ROOT, 'src/index.ts')});
@@ -134,6 +141,7 @@ await renderMedia({
   serveUrl,
   codec: 'h264',
   crf: 20,
+  concurrency: Number(process.env.RENDER_CONCURRENCY || os.cpus().length),
   outputLocation: out,
   inputProps,
   browserExecutable,

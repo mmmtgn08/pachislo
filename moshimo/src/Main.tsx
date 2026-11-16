@@ -104,7 +104,7 @@ const SceneView: React.FC<{scene: Scene; index: number; st: Style; showCountdown
   return (
     <AbsoluteFill>
       <AbsoluteFill style={tr.wrap}>
-        <ThreeCanvas width={width} height={height} camera={{fov: 50, position: [0, 0, 8]}}>
+        <ThreeCanvas width={width} height={height} shadows camera={{fov: 50, position: [0, 0, 8]}}>
           <Comp frame={frame} frames={scene.frames} style={st} event={scene.event} variant={(st.cam + index) % 3} />
         </ThreeCanvas>
       </AbsoluteFill>
@@ -127,7 +127,7 @@ const Cta: React.FC<{text: string}> = ({text}) => {
   );
 };
 
-export const Main: React.FC<MoshimoProps> = ({title, badge, cta, zeroLabel, statusLabel, seed, scenes}) => {
+export const Main: React.FC<MoshimoProps> = ({title, badge, cta, zeroLabel, statusLabel, seed, bgm, bgmVolume = 0.15, scenes}) => {
   const frame = useCurrentFrame();
   const st = makeStyle(seed || title);
   let acc = 0;
@@ -142,6 +142,7 @@ export const Main: React.FC<MoshimoProps> = ({title, badge, cta, zeroLabel, stat
   const last = scenes.length - 1;
   return (
     <AbsoluteFill style={{background: '#000'}}>
+      {bgm && <Audio src={staticFile(bgm)} volume={bgmVolume} />}
       {scenes.map((s, i) => (
         <Sequence key={i} from={starts[i]} durationInFrames={s.frames}>
           <SceneView scene={s} index={i} st={st} showCountdown={i === cdIdx} zeroLabel={zeroLabel} />

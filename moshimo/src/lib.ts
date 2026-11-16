@@ -52,6 +52,8 @@ export type MoshimoProps = {
   zeroLabel: string; // カウントダウン後の表示 例: 「酸素 0%」
   statusLabel: string; // 右上バッジ 例: 「O₂ 0%」
   seed: string;
+  bgm?: string; // public/ 内の BGM ファイル
+  bgmVolume?: number;
   scenes: Scene[];
 };
 
