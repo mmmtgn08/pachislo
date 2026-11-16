@@ -36,12 +36,19 @@
 | type | 使える event | 映像 |
 |---|---|---|
 | `earthIntro` | （なし） | 宇宙から地球にズーム。必ず1つ目 |
-| `city` | `stall` 車が止まり煙 / `float` 車や人が浮く / `dark` 空が暗くなり窓明かり / `freeze` 凍って雪 / `wind` 暴風で吹き飛ぶ / `none` | 道路と建物と車と人 |
+| `city` | `stall` 車が止まり煙 / `float` 車や人が浮く / `dark` 空が暗くなり窓明かり / `freeze` 凍って雪 / `wind` 暴風で吹き飛ぶ / `rain` 雨 / `none` | 道路・ビル・車・人 |
 | `fire` | `out` 火が消える / `grow` 火が大きくなる / `none` | 夜の焚き火と2人 |
-| `park` | `ears` 耳キーン / `cheer` 喜ぶ / `float` 浮く / `freeze` 震える / `wind` 吹き飛ぶ / `dark` 暗くなる / `none` | 公園と3人 |
-| `ocean` | `vanish` 海が消える / `float` 水が浮く / `freeze` 凍る / `wind` 大波 / `none` | 海と海底 |
+| `park` | `ears` 耳をふさぐ / `cheer` 喜ぶ / `float` 浮く / `freeze` 震える / `wind` 吹き飛ぶ / `dark` 暗くなる / `rain` 雨 / `none` | 公園と3人 |
+| `ocean` | `vanish` 海が消える / `float` 水が浮く / `freeze` 凍る / `wind` 大波 / `rain` 雨 / `none` | 海面と海底 |
+| `underwater` | `dark` 光が届かなくなる / `freeze` 海面が凍る / `vanish` 水がなくなり魚が底へ / `none` | 海の中（魚の群れ・サンゴ・海藻・光の筋） |
+| `sky` | `vanish` 雲が消える / `wind` 雲や鳥が吹き飛ぶ / `dark` 暗くなる / `freeze` 雪 / `rain` 雨 / `none` | 空（雲・鳥の群れ・飛行機） |
+| `space` | `vanish` 月が消える / `dark` 太陽が暗くなる / `freeze` 地球が凍る / `float` 大気が宇宙へ / `none` | 太陽・地球・月（月の軌道つき） |
+| `room` | `dark` 停電 / `float` 家具が浮く / `freeze` 部屋が凍る / `cheer` 喜ぶ / `none` | 部屋（ソファ・テレビ・照明・冷蔵庫と人） |
+| `animals` | `ears` びっくり / `cheer` ジャンプ / `float` 浮く / `freeze` 震える / `wind` 吹き飛ぶ / `dark` / `rain` / `none` | 犬・猫・うさぎ |
 | `crumble` | （なし） | 地面がブロック状に崩れてマグマ |
 | `earthEnd` | `crumble` 砕ける / `ice` 凍る / `dark` 暗くなり街明かり / `fine` 無事 / `float` 大気が宇宙へ | 必ず最後 |
+
+ネタに一番合う場面を選ぶ（例: 月の話なら `space`、電気の話なら `room`、生き物の話なら `animals` や `underwater`）。毎回同じ場面ばかりにならないよう、直近の動画で使った場面も見て変える。
 
 その他の項目:
 - `se`: シーン頭の効果音 `don` / `pop` / `peka` / `chan` / `boo` / `whoosh` / `kira`

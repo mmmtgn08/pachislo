@@ -24,11 +24,11 @@ export const pop = (frame: number, start = 0, dur = 8) => {
 };
 
 // ───────── 台本の型 ─────────
-export const SCENE_TYPES = ['earthIntro', 'city', 'fire', 'park', 'ocean', 'crumble', 'earthEnd'] as const;
+export const SCENE_TYPES = ['earthIntro', 'city', 'fire', 'park', 'ocean', 'crumble', 'earthEnd', 'space', 'sky', 'underwater', 'room', 'animals'] as const;
 export type SceneType = (typeof SCENE_TYPES)[number];
 
 /** シーン内で起きる出来事 */
-export const EVENTS = ['none', 'stall', 'float', 'dark', 'freeze', 'wind', 'vanish', 'ears', 'cheer', 'out', 'grow'] as const;
+export const EVENTS = ['none', 'stall', 'float', 'dark', 'freeze', 'wind', 'vanish', 'ears', 'cheer', 'out', 'grow', 'rain'] as const;
 export type SceneEvent = (typeof EVENTS)[number];
 
 /** 地球のエンディング */

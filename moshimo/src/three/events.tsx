@@ -25,6 +25,7 @@ export const windFx = (frame: number, at: number, key: string, power = 1) => {
 
 export const freezeK = (frame: number, at: number) => ease(prog(frame, at, at + 36));
 export const darkK = (frame: number, at: number) => ease(prog(frame, at, at + 30));
+export const rainK = (frame: number, at: number) => ease(prog(frame, at, at + 20));
 
 const ICE = new THREE.Color('#e6f6ff');
 /** 凍結に応じて色を白っぽい氷色に寄せる */
@@ -43,6 +44,7 @@ export const Outdoor: React.FC<{style: Style; frame: number; at: number; event?:
 }) => {
   const dk = event === 'dark' ? darkK(frame, at) : 0;
   const fz = event === 'freeze' ? freezeK(frame, at) : 0;
+  const rn = event === 'rain' ? rainK(frame, at) : 0;
   let top = style.sky.top, bottom = style.sky.bottom;
   if (dk > 0) {
     top = mix(top, '#000000', dk);
@@ -52,8 +54,12 @@ export const Outdoor: React.FC<{style: Style; frame: number; at: number; event?:
     top = mix(top, '#a9c7dd', fz * 0.7);
     bottom = mix(bottom, '#f2f8fc', fz * 0.7);
   }
+  if (rn > 0) {
+    top = mix(top, '#4b5563', rn * 0.85);
+    bottom = mix(bottom, '#9ca3af', rn * 0.8);
+  }
   const night = style.tod === 'night' || dk > 0.5;
-  const sunI = style.sun.intensity * (1 - dk * 0.92);
+  const sunI = style.sun.intensity * (1 - dk * 0.92) * (1 - rn * 0.6);
   const amb = style.sun.ambient * 0.45 * (1 - dk * 0.75); // 環境光(Realism)があるので控えめ
   return (
     <>
@@ -66,6 +72,7 @@ export const Outdoor: React.FC<{style: Style; frame: number; at: number; event?:
       {night && <hemisphereLight args={['#5b6fa8', '#1a1f33', 0.4]} />}
       {fz > 0 && <Snow frame={frame} k={fz} />}
       {event === 'wind' && <WindStreaks frame={frame} at={at} />}
+      {rn > 0 && <Rain frame={frame} k={rn} />}
     </>
   );
 };
@@ -83,6 +90,20 @@ const Snow: React.FC<{frame: number; k: number}> = ({frame, k}) => {
           </mesh>
         );
       })}
+    </>
+  );
+};
+
+const Rain: React.FC<{frame: number; k: number}> = ({frame, k}) => {
+  const drops = useMemo(() => new Array(320).fill(0).map((_, i) => ({x: (rnd(`rx${i}`) - 0.5) * 36, z: (rnd(`rz${i}`) - 0.5) * 28 + 2, o: rnd(`ro${i}`)})), []);
+  return (
+    <>
+      {drops.map((d, i) => (
+        <mesh key={i} position={[d.x, 14 - ((frame * 0.9 + d.o * 14) % 14), d.z]} rotation={[0, 0, 0.12]}>
+          <boxGeometry args={[0.045, 0.9, 0.045]} />
+          <meshBasicMaterial color="#dbe9ff" transparent opacity={0.7 * k} />
+        </mesh>
+      ))}
     </>
   );
 };
