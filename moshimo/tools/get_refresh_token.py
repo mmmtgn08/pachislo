@@ -13,7 +13,7 @@ from pathlib import Path
 
 from google_auth_oauthlib.flow import InstalledAppFlow
 
-SCOPES = ["https://www.googleapis.com/auth/youtube.upload"]
+SCOPES = ["https://www.googleapis.com/auth/youtube.upload", "https://www.googleapis.com/auth/youtube.force-ssl"]
 
 path = Path(sys.argv[1] if len(sys.argv) > 1 else Path(__file__).parent / "client_secret.json")
 flow = InstalledAppFlow.from_client_secrets_file(str(path), SCOPES)
