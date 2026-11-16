@@ -238,7 +238,8 @@ export const Park: React.FC<SceneProps> = ({frame, frames, style, event = 'none'
           <Person
             color={iced(pp.c, fz * 0.6)}
             headShake={pp.main ? shake : 0}
-            armUp={ears && pp.main ? 0.55 : cheer ? 0.6 + (pp.main ? 0.3 : 0) : event === 'float' && frame > at ? 0.9 : 0}
+            pose={ears && pp.main ? 'ears' : undefined}
+            armUp={cheer ? 0.6 + (pp.main ? 0.3 : 0) : event === 'float' && frame > at ? 0.9 : 0}
             bounce={cheer ? Math.abs(Math.sin(frame * 0.25 + i)) * (pp.main ? 0.35 : 0.25) : 0}
           />
         </Affected>

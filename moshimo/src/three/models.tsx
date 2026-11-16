@@ -270,52 +270,87 @@ export const Human: React.FC<{
   headShake?: number;
   bounce?: number;
   armUp?: number;
+  pose?: 'ears';
   scale?: number;
-}> = ({color = '#3b82f6', pants = '#1f2937', seed = 'h', position = [0, 0, 0], rotationY = 0, headShake = 0, bounce = 0, armUp = 0, scale = 1}) => {
+}> = ({color = '#3b82f6', pants = '#1f2937', seed = 'h', position = [0, 0, 0], rotationY = 0, headShake = 0, bounce = 0, armUp = 0, pose, scale = 1}) => {
+  const ears = pose === 'ears';
   const skin = SKIN[Math.floor(rnd(`${seed}sk`) * SKIN.length)];
   const hair = HAIR[Math.floor(rnd(`${seed}hr`) * HAIR.length)];
   const longHair = rnd(`${seed}lh`) > 0.55;
   const cloth = {roughness: 0.85};
+  const skinMat = <meshStandardMaterial color={skin} roughness={0.6} />;
+  const shirtMat = <meshStandardMaterial color={color} {...cloth} />;
+  const pantsMat = <meshStandardMaterial color={pants} {...cloth} />;
+  // 腕: 肩の関節を支点に回し、肘で少し曲げる(胴体とつながって見えるように)
   const arm = (side: number) => (
-    <group position={[side * 0.43, 1.52, 0]} rotation={[0, 0, side * (0.12 + armUp * 2.3)]}>
-      <mesh position={[0, -0.27, 0]}>
-        <capsuleGeometry args={[0.09, 0.42, 4, 10]} />
-        <meshStandardMaterial color={color} {...cloth} />
+    <group position={[side * 0.29, 1.53, 0]} rotation={[ears ? -0.2 : 0, 0, side * (ears ? 2.15 : 0.1 + armUp * 2.3)]}>
+      <mesh>
+        <sphereGeometry args={[0.105, 14, 10]} />
+        {shirtMat}
       </mesh>
-      <mesh position={[0, -0.6, 0]}>
-        <capsuleGeometry args={[0.075, 0.22, 4, 10]} />
-        <meshStandardMaterial color={skin} roughness={0.6} />
+      <mesh position={[0, -0.17, 0]}>
+        <capsuleGeometry args={[0.08, 0.22, 4, 12]} />
+        {shirtMat}
       </mesh>
-      <mesh position={[0, -0.78, 0]}>
-        <sphereGeometry args={[0.085, 8, 6]} />
-        <meshStandardMaterial color={skin} roughness={0.6} />
+      <group position={[0, -0.33, 0]} rotation={[ears ? 0 : -0.25 - armUp * 0.3, 0, ears ? side * 1.65 : 0]}>
+        <mesh>
+          <sphereGeometry args={[0.068, 12, 8]} />
+          {skinMat}
+        </mesh>
+        <mesh position={[0, -0.15, 0]}>
+          <capsuleGeometry args={[0.062, 0.22, 4, 12]} />
+          {skinMat}
+        </mesh>
+        <mesh position={[0, -0.32, 0.01]} scale={[0.85, 1.15, 0.55]}>
+          <sphereGeometry args={[0.075, 12, 8]} />
+          {skinMat}
+        </mesh>
+      </group>
+    </group>
+  );
+  // 脚: 股関節→太もも→膝→すね→靴
+  const leg = (side: number) => (
+    <group key={side} position={[side * 0.115, 0.92, 0]}>
+      <mesh position={[0, -0.2, 0]}>
+        <capsuleGeometry args={[0.1, 0.26, 4, 12]} />
+        {pantsMat}
+      </mesh>
+      <mesh position={[0, -0.42, 0]}>
+        <sphereGeometry args={[0.09, 12, 8]} />
+        {pantsMat}
+      </mesh>
+      <mesh position={[0, -0.62, 0]}>
+        <capsuleGeometry args={[0.085, 0.26, 4, 12]} />
+        {pantsMat}
+      </mesh>
+      <mesh position={[0, -0.85, 0.06]} geometry={rbox(0.19, 0.12, 0.33, 0.055)}>
+        <meshStandardMaterial color="#f1f5f9" roughness={0.6} />
       </mesh>
     </group>
   );
   return (
     <group position={[position[0], position[1] + bounce, position[2]]} rotation={[0, rotationY, 0]} scale={scale}>
-      {/* 脚と靴 */}
-      {[-1, 1].map((s) => (
-        <group key={s}>
-          <mesh position={[s * 0.13, 0.5, 0]}>
-            <capsuleGeometry args={[0.11, 0.62, 4, 10]} />
-            <meshStandardMaterial color={pants} {...cloth} />
-          </mesh>
-          <mesh position={[s * 0.13, 0.07, 0.06]} geometry={rbox(0.2, 0.13, 0.34, 0.06)}>
-            <meshStandardMaterial color="#f1f5f9" roughness={0.6} />
-          </mesh>
-        </group>
-      ))}
-      {/* 胴体 */}
-      <mesh position={[0, 1.22, 0]}>
-        <capsuleGeometry args={[0.3, 0.55, 6, 16]} />
-        <meshStandardMaterial color={color} {...cloth} />
+      {leg(-1)}
+      {leg(1)}
+      {/* 腰 */}
+      <mesh position={[0, 0.94, 0]} geometry={rbox(0.44, 0.2, 0.26, 0.09)}>
+        {pantsMat}
+      </mesh>
+      {/* 胴体(肩幅のある形) */}
+      <mesh position={[0, 1.27, 0]} scale={[1.12, 1, 0.72]}>
+        <capsuleGeometry args={[0.26, 0.36, 6, 16]} />
+        {shirtMat}
+      </mesh>
+      {/* 肩のライン */}
+      <mesh position={[0, 1.55, 0]} rotation={[0, 0, Math.PI / 2]} scale={[1, 1, 0.75]}>
+        <capsuleGeometry args={[0.105, 0.42, 4, 12]} />
+        {shirtMat}
       </mesh>
       {arm(-1)}
       {arm(1)}
       {/* 首と頭 */}
-      <mesh position={[0, 1.72, 0]}>
-        <cylinderGeometry args={[0.08, 0.09, 0.14, 16]} />
+      <mesh position={[0, 1.7, 0]}>
+        <cylinderGeometry args={[0.075, 0.09, 0.18, 16]} />
         <meshStandardMaterial color={skin} roughness={0.6} />
       </mesh>
       <group position={[0, 1.98, 0]} rotation={[0, 0, headShake]}>
