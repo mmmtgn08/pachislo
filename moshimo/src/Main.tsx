@@ -127,7 +127,7 @@ const Cta: React.FC<{text: string}> = ({text}) => {
   );
 };
 
-export const Main: React.FC<MoshimoProps> = ({title, badge, cta, zeroLabel, statusLabel, seed, scenes}) => {
+export const Main: React.FC<MoshimoProps> = ({title, badge, cta, zeroLabel, statusLabel, seed, bgm, bgmVolume = 0.15, scenes}) => {
   const frame = useCurrentFrame();
   const st = makeStyle(seed || title);
   let acc = 0;
@@ -142,6 +142,7 @@ export const Main: React.FC<MoshimoProps> = ({title, badge, cta, zeroLabel, stat
   const last = scenes.length - 1;
   return (
     <AbsoluteFill style={{background: '#000'}}>
+      {bgm && <Audio src={staticFile(bgm)} volume={bgmVolume} />}
       {scenes.map((s, i) => (
         <Sequence key={i} from={starts[i]} durationInFrames={s.frames}>
           <SceneView scene={s} index={i} st={st} showCountdown={i === cdIdx} zeroLabel={zeroLabel} />

@@ -108,6 +108,10 @@ if (totalSec > 59.5) {
   process.exit(1);
 }
 
+// ── BGM(毎回シードから合成。著作権フリー) ──
+const bgmSeed = script.seed || `${script.date || ''}-${script.title}`;
+execFileSync('python3', [path.join(ROOT, 'tools', 'bgm.py'), path.join(ROOT, 'public', 'bgm.wav'), '--seconds', String(Math.ceil(totalSec) + 1), '--seed', bgmSeed], {stdio: 'inherit'});
+
 // ── シリーズ回数 ──
 const histPath = path.join(ROOT, 'history.jsonl');
 const hist = fs.existsSync(histPath) ? fs.readFileSync(histPath, 'utf8').split('\n').filter(Boolean).map((l) => JSON.parse(l)) : [];
@@ -123,6 +127,8 @@ const inputProps = {
   zeroLabel: script.zero_label || 'ゼロ',
   statusLabel: script.status_label || '',
   seed,
+  bgm: 'bgm.wav',
+  bgmVolume: Number(process.env.BGM_VOLUME || 0.15),
   scenes,
 };
 const serveUrl = await bundle({entryPoint: path.join(ROOT, 'src/index.ts')});
