@@ -28,11 +28,11 @@ export const SCENE_TYPES = ['earthIntro', 'city', 'fire', 'park', 'ocean', 'crum
 export type SceneType = (typeof SCENE_TYPES)[number];
 
 /** シーン内で起きる出来事 */
-export const EVENTS = ['none', 'stall', 'float', 'dark', 'freeze', 'wind', 'vanish', 'ears', 'cheer', 'out', 'grow', 'rain'] as const;
+export const EVENTS = ['none', 'stall', 'float', 'dark', 'freeze', 'wind', 'vanish', 'ears', 'cheer', 'out', 'grow', 'rain', 'meteor', 'explode', 'tsunami', 'burn'] as const;
 export type SceneEvent = (typeof EVENTS)[number];
 
 /** 地球のエンディング */
-export const ENDINGS = ['crumble', 'ice', 'dark', 'fine', 'float'] as const;
+export const ENDINGS = ['crumble', 'ice', 'dark', 'fine', 'float', 'impact', 'burn'] as const;
 
 export type Scene = {
   type: SceneType;

@@ -84,8 +84,9 @@ export const Earth: React.FC<{
   ice?: number; // 0..1 凍りつく
   lights?: number; // 0..1 夜側の街明かり
   strip?: number; // 0..1 大気や海が宇宙へ流れ出す
+  burn?: number; // 0..1 地表が赤く焼ける
   radius?: number;
-}> = ({rotation, atmosphere = 1, clouds = 1, crumble = 0, ice = 0, lights = 0, strip = 0, radius = 2}) => {
+}> = ({rotation, atmosphere = 1, clouds = 1, crumble = 0, ice = 0, lights = 0, strip = 0, burn = 0, radius = 2}) => {
   const tex = useMemo(makeTextures, []);
   const frags = useMemo(
     () =>
@@ -140,6 +141,18 @@ export const Earth: React.FC<{
         <mesh rotation={[0, rotation * 1.25, 0]}>
           <sphereGeometry args={[radius * 1.015, 64, 48]} />
           <meshStandardMaterial map={tex.clouds} transparent opacity={clouds} depthWrite={false} />
+        </mesh>
+      )}
+      {burn > 0 && (
+        <mesh rotation={[0, rotation, 0]}>
+          <sphereGeometry args={[radius * 1.006, 64, 48]} />
+          <meshStandardMaterial color="#2a0800" emissive="#ff3300" emissiveIntensity={0.9} transparent opacity={0.88 * burn} roughness={0.9} depthWrite={false} />
+        </mesh>
+      )}
+      {burn > 0 && (
+        <mesh>
+          <sphereGeometry args={[radius * 1.15, 48, 32]} />
+          <meshBasicMaterial color="#ff7a2a" transparent opacity={0.25 * burn} side={THREE.BackSide} blending={THREE.AdditiveBlending} depthWrite={false} />
         </mesh>
       )}
       {ice > 0 && (

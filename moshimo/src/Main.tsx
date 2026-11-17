@@ -122,9 +122,14 @@ const SceneView: React.FC<{scene: Scene; index: number; st: Style; showCountdown
   const {width, height} = useVideoConfig();
   const Comp = SCENES[scene.type];
   const tr = useTransition(st.transition, index > 0);
+  // 爆発・隕石・衝突で画面を揺らす
+  const shakeAt = scene.type === 'earthEnd' ? Math.round(scene.frames * 0.35) : eventAt(scene.frames) + (scene.type === 'space' ? 20 : 0);
+  const shaky = ['explode', 'meteor', 'impact'].includes(scene.event ?? '') && frame >= shakeAt && frame < shakeAt + 24;
+  const sk = shaky ? (1 - (frame - shakeAt) / 24) * 18 : 0;
+  const shakeStyle: React.CSSProperties = sk ? {transform: `translate(${Math.sin(frame * 7.3) * sk}px, ${Math.cos(frame * 9.1) * sk}px)`} : {};
   return (
     <AbsoluteFill>
-      <AbsoluteFill style={tr.wrap}>
+      <AbsoluteFill style={{...tr.wrap, ...shakeStyle}}>
         <ThreeCanvas width={width} height={height} shadows camera={{fov: 50, position: [0, 0, 8]}}>
           <Comp frame={frame} frames={scene.frames} style={st} event={scene.event} variant={(st.cam + index) % 3} />
         </ThreeCanvas>

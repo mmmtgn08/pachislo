@@ -15,7 +15,7 @@ const SPEAKER_CREDIT = process.env.VOICE_CREDIT || 'VOICEVOX:青山龍星';
 const SPEED = Number(process.env.VOICE_SPEED || 1.15);
 const VOICEVOX = (process.env.VOICEVOX_URL || 'http://127.0.0.1:50021').replace(/\/$/, '');
 const SCENE_TYPES = ['earthIntro', 'city', 'fire', 'park', 'ocean', 'crumble', 'earthEnd', 'space', 'sky', 'underwater', 'room', 'animals'];
-const EVENTS = ['none', 'stall', 'float', 'dark', 'freeze', 'wind', 'vanish', 'ears', 'cheer', 'out', 'grow', 'rain', 'crumble', 'ice', 'fine'];
+const EVENTS = ['none', 'stall', 'float', 'dark', 'freeze', 'wind', 'vanish', 'ears', 'cheer', 'out', 'grow', 'rain', 'meteor', 'explode', 'tsunami', 'burn', 'crumble', 'ice', 'fine', 'impact'];
 const SE_NAMES = ['pop', 'don', 'peka', 'chan', 'boo', 'whoosh', 'kira'];
 
 const args = process.argv.slice(2);

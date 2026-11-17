@@ -55,7 +55,29 @@ export const Space: React.FC<SceneProps> = ({frame, frames, event = 'none', vari
           </mesh>
         ))}
       </group>
-      <Earth rotation={frame * 0.01} radius={1.6} ice={event === 'freeze' ? k : 0} strip={event === 'float' ? k : 0} lights={dk} />
+      <Earth rotation={frame * 0.01} radius={1.6} ice={event === 'freeze' ? k : 0} strip={event === 'float' ? k : 0} lights={dk} burn={event === 'meteor' ? ease(prog(frame, at + 20, at + 60)) * 0.7 : 0} />
+      {event === 'meteor' && (() => {
+        const hit = at + 20;
+        const p = Math.min(1, Math.max(0, (frame - at + 30) / 50));
+        const pos = new THREE.Vector3(6, 4, 3).lerp(new THREE.Vector3(1.1, 0.7, 0.8), ease(p));
+        const t = (frame - hit) / 30;
+        return (
+          <>
+            {frame < hit && (
+              <mesh position={pos.toArray() as V3}>
+                <icosahedronGeometry args={[0.35, 1]} />
+                <meshStandardMaterial color="#3b2a20" emissive="#ff6a1a" emissiveIntensity={1.4} />
+              </mesh>
+            )}
+            {t >= 0 && t < 1.2 && (
+              <mesh position={[1.1, 0.7, 0.8]} scale={0.4 + t * 6}>
+                <sphereGeometry args={[0.5, 20, 14]} />
+                <meshBasicMaterial color="#fff2c4" transparent opacity={1 - t / 1.2} blending={THREE.AdditiveBlending} depthWrite={false} />
+              </mesh>
+            )}
+          </>
+        );
+      })()}
       {/* 月 */}
       {moonK > 0.01 && (
         <group position={moon} scale={moonK}>
@@ -480,7 +502,7 @@ export const Animals: React.FC<SceneProps> = ({frame, frames, style, event = 'no
         );
       })}
       {list.map((a, i) => (
-        <Affected key={i} event={event === 'float' || event === 'wind' ? event : undefined} frame={frame} at={at} id={`an${i}`} position={a.p} rotation={[0, a.ry, 0]} power={0.35}>
+        <Affected key={i} event={['float', 'wind', 'explode', 'tsunami', 'meteor'].includes(event) ? event : undefined} frame={frame} at={at} id={`an${i}`} position={a.p} rotation={[0, a.ry, 0]} power={0.35}>
           <Animal
             species={a.sp}
             color={iced(a.c, fz * 0.5)}
