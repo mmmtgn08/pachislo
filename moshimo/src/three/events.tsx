@@ -2,6 +2,7 @@ import React, {useMemo} from 'react';
 import * as THREE from 'three';
 import {Sky, Stars} from './common';
 import {Realism, SunLight} from './models';
+import {BLAST_CENTER, Explosion, Fires, MeteorShower, Tsunami, blastFx, tsunamiFront} from './effects';
 import {Style, ease, prog, rnd} from '../lib';
 
 /** 出来事が起きるシーン内フレーム */
@@ -58,6 +59,17 @@ export const Outdoor: React.FC<{style: Style; frame: number; at: number; event?:
     top = mix(top, '#4b5563', rn * 0.85);
     bottom = mix(bottom, '#9ca3af', rn * 0.8);
   }
+  // 大惨事系: 空の色を変える
+  const hot = event === 'burn' || event === 'explode' ? ease(prog(frame, at, at + 30)) : event === 'meteor' ? ease(prog(frame, at, at + 60)) * 0.6 : 0;
+  if (hot > 0) {
+    top = mix(top, '#3a0b02', hot);
+    bottom = mix(bottom, '#ff6a2a', hot * 0.85);
+  }
+  const storm = event === 'tsunami' ? ease(prog(frame, at, at + 30)) : 0;
+  if (storm > 0) {
+    top = mix(top, '#2f3b4a', storm * 0.8);
+    bottom = mix(bottom, '#8a99a8', storm * 0.7);
+  }
   const night = style.tod === 'night' || dk > 0.5;
   const sunI = style.sun.intensity * (1 - dk * 0.92) * (1 - rn * 0.6);
   const amb = style.sun.ambient * 0.45 * (1 - dk * 0.75); // 環境光(Realism)があるので控えめ
@@ -73,6 +85,10 @@ export const Outdoor: React.FC<{style: Style; frame: number; at: number; event?:
       {fz > 0 && <Snow frame={frame} k={fz} />}
       {event === 'wind' && <WindStreaks frame={frame} at={at} />}
       {rn > 0 && <Rain frame={frame} k={rn} />}
+      {event === 'meteor' && <MeteorShower frame={frame} at={at} />}
+      {event === 'explode' && <Explosion frame={frame} at={at} />}
+      {event === 'burn' && <Fires frame={frame} at={at} />}
+      {event === 'tsunami' && <Tsunami frame={frame} at={at} />}
     </>
   );
 };
@@ -153,6 +169,24 @@ export const Affected: React.FC<{
     rz += w.rz;
   } else if (event === 'freeze') {
     x += Math.sin(frame * 2.7 + id.length) * 0.02 * freezeK(frame, at);
+  } else if (event === 'explode') {
+    const b = blastFx(frame, at, position, id, power);
+    x += b.dx;
+    y += b.dy;
+    z += b.dz;
+    rx += b.rx;
+    rz += b.rz;
+  } else if (event === 'tsunami') {
+    const front = tsunamiFront(frame, at);
+    if (front > position[2]) {
+      const d = front - position[2];
+      z += d * 0.85;
+      y += Math.min(4, d * 0.25) * power;
+      rx += d * 0.08 * power;
+      rz += d * 0.05 * power * (id.length % 2 ? 1 : -1);
+    }
+  } else if (event === 'meteor' && frame > at) {
+    x += Math.sin(frame * 3.1 + id.length) * 0.03;
   }
   return (
     <group position={[x, y, z]} rotation={[rx, ry, rz]}>

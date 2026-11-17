@@ -39,7 +39,7 @@ export const EarthIntro: React.FC<SceneProps> = ({frame, frames, variant}) => {
 /** 地球のエンディング: crumble / ice / dark / fine / float */
 export const EarthEnd: React.FC<SceneProps> = ({frame, frames, event = 'crumble', variant}) => {
   const k = ease(prog(frame, 10, frames * 0.75));
-  const zoomOut = event === 'crumble' ? lerp(7, 12, k) : lerp(6.5, 8, k);
+  const zoomOut = event === 'crumble' || event === 'impact' ? lerp(7.5, 12, k) : lerp(6.5, 8, k);
   const sunI = event === 'dark' ? 2.4 * (1 - k * 0.95) : 2.4;
   const side = [0, -2, 2][variant % 3];
   return (
@@ -51,13 +51,47 @@ export const EarthEnd: React.FC<SceneProps> = ({frame, frames, event = 'crumble'
       <Stars />
       <Earth
         rotation={0.8 + frame * 0.01}
-        crumble={event === 'crumble' ? k : 0}
+        crumble={event === 'crumble' ? k : event === 'impact' ? ease(prog(frame, frames * 0.38, frames * 0.85)) : 0}
         atmosphere={event === 'crumble' || event === 'float' ? 1 - k : 1}
         clouds={event === 'crumble' ? 1 - k : event === 'ice' ? 1 - k * 0.5 : 1}
         ice={event === 'ice' ? k : 0}
         lights={event === 'dark' ? k : 0}
         strip={event === 'float' ? k : 0}
+        burn={event === 'burn' ? k : 0}
       />
+      {event === 'impact' && <AsteroidHit frame={frame} frames={frames} />}
+    </>
+  );
+};
+
+/** 巨大隕石が地球に衝突する */
+const AsteroidHit: React.FC<{frame: number; frames: number}> = ({frame, frames}) => {
+  const hitAt = frames * 0.35;
+  const p = Math.min(1, frame / hitAt);
+  const start = new THREE.Vector3(7, 5, -4), end = new THREE.Vector3(1.4, 0.9, 0.6);
+  const pos = start.clone().lerp(end, ease(p));
+  const t = (frame - hitAt) / 30;
+  return (
+    <>
+      {p < 1 && (
+        <group position={pos.toArray() as V3}>
+          <mesh>
+            <icosahedronGeometry args={[0.45, 1]} />
+            <meshStandardMaterial color="#3b2a20" emissive="#ff6a1a" emissiveIntensity={1.2} roughness={1} />
+          </mesh>
+          <mesh position={[0.9, 0.8, -0.6]} rotation={[0, 0, 0.85]}>
+            <coneGeometry args={[0.4, 2.4, 16, 1, true]} />
+            <meshBasicMaterial color="#ffb347" transparent opacity={0.7} blending={THREE.AdditiveBlending} depthWrite={false} side={THREE.DoubleSide} />
+          </mesh>
+          <pointLight color="#ff8a3a" intensity={40} distance={10} />
+        </group>
+      )}
+      {t >= 0 && t < 1.5 && (
+        <mesh position={end.toArray() as V3} scale={0.5 + t * 8}>
+          <sphereGeometry args={[0.5, 24, 16]} />
+          <meshBasicMaterial color="#fff2c4" transparent opacity={Math.max(0, 1 - t / 1.2)} blending={THREE.AdditiveBlending} depthWrite={false} />
+        </mesh>
+      )}
     </>
   );
 };
@@ -94,7 +128,7 @@ export const City: React.FC<SceneProps> = ({frame, frames, style, event, variant
       })),
     [style]
   );
-  const stops = event === 'stall' || event === 'freeze' || event === 'float' || event === 'wind';
+  const stops = ['stall', 'freeze', 'float', 'wind', 'explode', 'tsunami', 'meteor', 'burn'].includes(event ?? '');
   const dist = (f: number, v: number) => {
     if (!stops || f <= at) return f * v;
     const dec = Math.min(f - at, 12);
@@ -104,7 +138,7 @@ export const City: React.FC<SceneProps> = ({frame, frames, style, event, variant
   const camX = lerp(-6, 2, t);
   const cams: [V3, V3][] = [
     [[camX, 11, 17], [camX + 4, 0.5, -1]],
-    [[lerp(-14, -8, t), 3.5, 8], [lerp(-6, 0, t), 1.5, 0]],
+    [[lerp(-14, -8, t), 7, 13], [lerp(-6, 0, t), 2.5, -3]],
     [[lerp(4, 0, t), 22, 6], [lerp(4, 0, t), 0, -1]],
   ];
   const [cpos, clook] = cams[variant % 3];
@@ -116,7 +150,7 @@ export const City: React.FC<SceneProps> = ({frame, frames, style, event, variant
       <Ground color={ground} />
       <Road color={iced('#4b5563', fz)} />
       {buildings.map((b, i) => (
-        <Affected key={i} event={event === 'freeze' ? event : undefined} frame={frame} at={at + 6} id={`b${i}`} position={[b.x, b.h / 2, b.z]}>
+        <Affected key={i} event={event === 'freeze' || event === 'explode' || event === 'tsunami' ? event : undefined} frame={frame} at={at + 6} id={`b${i}`} position={[b.x, b.h / 2, b.z]} power={event === 'explode' ? 0.15 : event === 'tsunami' ? 0.3 : 1}>
           <Building w={b.w} h={b.h} color={iced(b.c, fz)} lit={lightsOn} seed={`${style.seed}b${i}`} />
         </Affected>
       ))}
@@ -229,7 +263,7 @@ export const Park: React.FC<SceneProps> = ({frame, frames, style, event = 'none'
         // カメラの通り道に入らないよう、人の後ろ側(半円)にだけ木を置く
         const a = Math.PI * (1.05 + (i / 7) * 0.9);
         return (
-          <Affected key={i} event={event === 'freeze' ? event : undefined} frame={frame} at={at + 4} id={`t${i}`} position={[Math.cos(a) * 8, 0, Math.sin(a) * 6 - 3]}>
+          <Affected key={i} event={event === 'freeze' || event === 'explode' ? event : undefined} frame={frame} at={at + 4} id={`t${i}`} position={[Math.cos(a) * 8, 0, Math.sin(a) * 6 - 3]}>
             <Tree color={iced('#2f8f3a', fz)} seed={`t${i}`} />
           </Affected>
         );
