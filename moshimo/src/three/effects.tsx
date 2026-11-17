@@ -42,14 +42,14 @@ const Impact: React.FC<{t: number; pos: V3; size?: number}> = ({t, pos, size = 1
 };
 
 // ───────── 隕石群 ─────────
-export const MeteorShower: React.FC<{frame: number; at: number; count?: number; spread?: number}> = ({frame, at, count = 16, spread = 1}) => {
+export const MeteorShower: React.FC<{frame: number; at: number; count?: number; spread?: number}> = ({frame, at, count = 22, spread = 1}) => {
   const ms = useMemo(
     () =>
       new Array(count).fill(0).map((_, i) => {
         const target = new THREE.Vector3((rnd(`mt${i}x`) - 0.5) * 40 * spread, 0, 4 - rnd(`mt${i}z`) * 30 * spread);
         const start = target.clone().add(new THREE.Vector3(-8 - rnd(`ms${i}`) * 5, 18, -4));
         const dir = target.clone().sub(start).normalize();
-        return {target, start, delay: i * 4 + rnd(`md${i}`) * 4, dur: 24 + rnd(`mu${i}`) * 8, size: 0.9 + rnd(`mz${i}`) * 1.1, q: new THREE.Quaternion().setFromUnitVectors(UP, dir.clone().negate())};
+        return {target, start, delay: i * 3 + rnd(`md${i}`) * 3, dur: 24 + rnd(`mu${i}`) * 8, size: 0.9 + rnd(`mz${i}`) * 1.1, q: new THREE.Quaternion().setFromUnitVectors(UP, dir.clone().negate())};
       }),
     [count, spread]
   );
