@@ -48,7 +48,7 @@ node scripts/render.mjs topics/gravity.json --tts dummy --out out/test.mp4
 
 # いきもの雑学ショート（実写・新チャンネル） `doubutsu/`
 
-動物・自然の実話の雑学を、無料の実写素材（Pexels / Pixabay）で毎日ショートにして、**もしもとは別のチャンネル**に投稿します。費用は Claude 以外かかりません。
+動物・自然の実話の雑学を、無料の実写素材（Pixabay / Pexels）で毎日ショートにして、**もしもとは別のチャンネル**に投稿します。費用は Claude 以外かかりません。
 
 ```
 [Claude Code 定期タスク]                 [GitHub Actions: doubutsu.yml]
@@ -70,10 +70,10 @@ node scripts/render.mjs topics/gravity.json --tts dummy --out out/test.mp4
 
 ## セットアップ（すべて無料）
 1. 新しい YouTube チャンネルを作る（同じ Google アカウントの「ブランドアカウント」で作ると、今の OAuth クライアントをそのまま使えます）
-2. https://www.pexels.com/api/ で API キーを取得（任意で https://pixabay.com/api/docs/ も）
+2. https://pixabay.com/ で無料登録し、https://pixabay.com/api/docs/ に表示される API キーを控える（Pexels は新規キーの発行を一時停止中。再開したら追加すると素材が増える）
 3. `python moshimo/tools/get_refresh_token.py` を実行し、ブラウザで**新チャンネル**を選んで許可
 4. GitHub の Settings → Secrets and variables → Actions に登録
-   - `PEXELS_API_KEY`（必須） / `PIXABAY_API_KEY`（任意・予備）
+   - `PIXABAY_API_KEY`（必須） / `PEXELS_API_KEY`（任意。取れたら追加）
    - `YT2_REFRESH_TOKEN`（新チャンネルのトークン。**`YT_REFRESH_TOKEN` は上書きしない**）
    - 別の OAuth クライアントを使うときだけ `YT2_CLIENT_ID` / `YT2_CLIENT_SECRET`
    - Variables（任意）: `DOUBUTSU_YT_PRIVACY`

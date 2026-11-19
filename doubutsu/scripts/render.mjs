@@ -1,7 +1,7 @@
 // 台本JSON → VOICEVOX ナレーション → 実写素材(Pexels / Pixabay) → Remotion で mp4
 //   node scripts/render.mjs topics/tako.json --out out/video.mp4 [--tts dummy] [--clips dummy]
 //
-// 環境変数: PEXELS_API_KEY（必須。--clips dummy なら不要） / PIXABAY_API_KEY（任意。Pexels で見つからないときの予備）
+// 環境変数: PIXABAY_API_KEY / PEXELS_API_KEY のどちらか1つ以上（--clips dummy なら不要）。両方あれば Pexels → Pixabay の順に探す
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -45,7 +45,7 @@ for (const [i, s] of (script.scenes || []).entries()) {
   if (s.se && !SE_NAMES.includes(s.se)) errors.push(`${i + 1}番目: se は ${SE_NAMES.join('/')} のいずれか`);
   if (s.telop && s.telop.split('\n').length > 3) errors.push(`${i + 1}番目: telop は3行まで`);
 }
-if (clipsMode === 'stock' && !process.env.PEXELS_API_KEY && !process.env.PIXABAY_API_KEY) errors.push('PEXELS_API_KEY が未設定です');
+if (clipsMode === 'stock' && !process.env.PEXELS_API_KEY && !process.env.PIXABAY_API_KEY) errors.push('PIXABAY_API_KEY(または PEXELS_API_KEY) が未設定です');
 if (errors.length) {
   console.error('台本エラー:\n' + errors.join('\n'));
   process.exit(1);
