@@ -1,0 +1,153 @@
+name: doubutsu
+
+# 動物・自然の雑学ショート(実写)。新チャンネル用。Claude の定期タスクが台本JSONを渡して起動する。
+on:
+  workflow_dispatch:
+    inputs:
+      script_json:
+        description: "台本JSON(文字列)。空なら script_path を使う"
+        required: false
+        default: ""
+      script_path:
+        description: "台本JSONのパス(テスト用)"
+        required: false
+        default: "doubutsu/topics/tako.json"
+      privacy:
+        description: "public / unlisted / private (空ならリポジトリ変数 DOUBUTSU_YT_PRIVACY → public)"
+        required: false
+        default: ""
+      dry_run:
+        description: "true なら投稿せず動画だけ作る"
+        required: false
+        default: "false"
+      preview:
+        description: "true なら動画を previews-doubutsu ブランチに置く(チャットで確認する用)"
+        required: false
+        default: "false"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: doubutsu
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    services:
+      voicevox:
+        image: voicevox/voicevox_engine:cpu-latest
+        ports:
+          - 50021:50021
+    defaults:
+      run:
+        working-directory: doubutsu
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: doubutsu/package-lock.json
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install fonts and packages
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y -q fonts-noto-cjk fonts-noto-cjk-extra ffmpeg
+          npm ci
+          npx remotion browser ensure
+          pip install -q -r ../moshimo/requirements.txt
+
+      - name: Prepare script
+        env:
+          SCRIPT_JSON: ${{ inputs.script_json }}
+          SCRIPT_PATH: ${{ inputs.script_path }}
+        run: |
+          if [ -n "$SCRIPT_JSON" ]; then
+            printf '%s' "$SCRIPT_JSON" > script.json
+          else
+            cp "../$SCRIPT_PATH" script.json
+          fi
+
+      - name: Render
+        env:
+          VOICEVOX_URL: http://127.0.0.1:50021
+          PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
+          PIXABAY_API_KEY: ${{ secrets.PIXABAY_API_KEY }}
+        run: node scripts/render.mjs script.json --out out/video.mp4
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: doubutsu-video
+          path: doubutsu/out/video.mp4
+          retention-days: 14
+
+      - name: Publish preview
+        if: inputs.preview == 'true'
+        working-directory: .
+        run: |
+          cp doubutsu/out/video.mp4 "$RUNNER_TEMP/doubutsu-preview.mp4"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -q --orphan previews-doubutsu
+          git rm -rfq . >/dev/null
+          git clean -fdxq
+          cp "$RUNNER_TEMP/doubutsu-preview.mp4" doubutsu-preview.mp4
+          git add doubutsu-preview.mp4
+          git commit -qm "Preview: ${{ github.run_id }}"
+          git push -qf origin previews-doubutsu
+
+      - name: Upload to YouTube
+        id: upload
+        if: inputs.dry_run != 'true'
+        working-directory: .
+        env:
+          YT_CLIENT_ID: ${{ secrets.YT2_CLIENT_ID || secrets.YT_CLIENT_ID }}
+          YT_CLIENT_SECRET: ${{ secrets.YT2_CLIENT_SECRET || secrets.YT_CLIENT_SECRET }}
+          YT_REFRESH_TOKEN: ${{ secrets.YT2_REFRESH_TOKEN }}
+          YT_PRIVACY: ${{ inputs.privacy || vars.DOUBUTSU_YT_PRIVACY }}
+          YT_CATEGORY: "15"
+        run: |
+          # 新チャンネル専用のトークン(YT2_REFRESH_TOKEN)だけを使う。もしもチャンネルに誤投稿しないため、未設定なら止める
+          if [ -z "$YT_REFRESH_TOKEN" ]; then
+            echo "::warning::YT2_REFRESH_TOKEN が未設定のため投稿しません"
+            exit 0
+          fi
+          VID=$(python moshimo/tools/upload.py doubutsu/out/video.mp4 doubutsu/out/video.meta.json | tail -1)
+          echo "video_id=$VID" >> "$GITHUB_OUTPUT"
+          echo "### 投稿完了: https://youtube.com/shorts/$VID" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Post engagement comment
+        if: steps.upload.outputs.video_id != ''
+        continue-on-error: true
+        working-directory: .
+        env:
+          YT_CLIENT_ID: ${{ secrets.YT2_CLIENT_ID || secrets.YT_CLIENT_ID }}
+          YT_CLIENT_SECRET: ${{ secrets.YT2_CLIENT_SECRET || secrets.YT_CLIENT_SECRET }}
+          YT_REFRESH_TOKEN: ${{ secrets.YT2_REFRESH_TOKEN }}
+        run: |
+          # comment が台本にないときは もしも用の定型文になってしまうので投稿しない
+          if node -e "process.exit(JSON.parse(require('fs').readFileSync('doubutsu/script.json','utf8')).comment ? 0 : 1)"; then
+            python moshimo/tools/comments.py post "${{ steps.upload.outputs.video_id }}" doubutsu/script.json
+          fi
+
+      - name: Record history
+        if: inputs.script_json != '' && inputs.dry_run != 'true' && steps.upload.outputs.video_id != ''
+        run: |
+          node scripts/record.mjs script.json out/video.meta.json "${{ steps.upload.outputs.video_id }}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add history.jsonl topics/posted
+          git commit -m "Add doubutsu short: $(date -u +%F)"
+          for i in 1 2 3 4; do
+            git pull --rebase -q && git push && exit 0
+            sleep $((i * 5))
+          done
+          exit 1

@@ -6,6 +6,7 @@
   YT_CLIENT_ID, YT_CLIENT_SECRET, YT_REFRESH_TOKEN
 任意:
   YT_PRIVACY  public / unlisted / private (既定 public)
+  YT_CATEGORY カテゴリID (既定 28 = 科学と技術。15 = ペットと動物)
 """
 from __future__ import annotations
 
@@ -41,7 +42,7 @@ def upload(video: Path, script: dict) -> str:
             "title": script["title"][:100],
             "description": build_description(script),
             "tags": script["tags"],
-            "categoryId": "28",  # 科学と技術
+            "categoryId": os.environ.get("YT_CATEGORY") or "28",
             "defaultLanguage": "ja",
             "defaultAudioLanguage": "ja",
         },

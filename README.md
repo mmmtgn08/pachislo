@@ -43,3 +43,45 @@ node scripts/render.mjs topics/gravity.json --tts dummy --out out/test.mp4
 - 概要欄に「VOICEVOX:青山龍星」のクレジットを自動記載しています
 - BGM は毎回プログラムで合成しています（動画ごとにテンポ・コード進行・音色が変わる）。音量はリポジトリ変数ではなく `BGM_VOLUME`（既定 0.15）で調整できます
 - `index.html`（スロット収支アプリ）と `privacy.html`（OAuth 用プライバシーポリシー）は GitHub Pages で公開しています
+
+---
+
+# いきもの雑学ショート（実写・新チャンネル） `doubutsu/`
+
+動物・自然の実話の雑学を、無料の実写素材（Pexels / Pixabay）で毎日ショートにして、**もしもとは別のチャンネル**に投稿します。費用は Claude 以外かかりません。
+
+```
+[Claude Code 定期タスク]                 [GitHub Actions: doubutsu.yml]
+ doubutsu/GUIDE.md と履歴を読む           VOICEVOX(春日部つむぎ)でナレーション
+ → 台本JSON(英語の素材検索語つき)  ─▶   Pexels/Pixabay から実写動画を検索・取得 → 縦型に切り抜き
+ → ワークフローを起動                      Remotion で字幕・カウンター・BGM → 新チャンネルに投稿
+```
+
+| ファイル | 役割 |
+|---|---|
+| `doubutsu/GUIDE.md` | 編集方針・事実のルール・素材検索のルール |
+| `doubutsu/DAILY_PROMPT.md` | 定期タスクに登録するプロンプト |
+| `doubutsu/history.jsonl` | 投稿履歴（自動追記） |
+| `doubutsu/topics/tako.json` | 台本の例 |
+| `doubutsu/scripts/render.mjs` | 台本 → ナレーション → 素材取得 → 動画 |
+| `doubutsu/src/Main.tsx` | 画面の演出（字幕・カウンター・ズーム） |
+
+効果音・BGM・投稿・コメントのスクリプトは `moshimo/tools/` を共用しています。
+
+## セットアップ（すべて無料）
+1. 新しい YouTube チャンネルを作る（同じ Google アカウントの「ブランドアカウント」で作ると、今の OAuth クライアントをそのまま使えます）
+2. https://www.pexels.com/api/ で API キーを取得（任意で https://pixabay.com/api/docs/ も）
+3. `python moshimo/tools/get_refresh_token.py` を実行し、ブラウザで**新チャンネル**を選んで許可
+4. GitHub の Settings → Secrets and variables → Actions に登録
+   - `PEXELS_API_KEY`（必須） / `PIXABAY_API_KEY`（任意・予備）
+   - `YT2_REFRESH_TOKEN`（新チャンネルのトークン。**`YT_REFRESH_TOKEN` は上書きしない**）
+   - 別の OAuth クライアントを使うときだけ `YT2_CLIENT_ID` / `YT2_CLIENT_SECRET`
+   - Variables（任意）: `DOUBUTSU_YT_PRIVACY`
+5. Actions → doubutsu → Run workflow（`dry_run: true`, `preview: true`）でテスト
+
+## ローカルで試す（APIキーなし）
+```
+cd doubutsu
+npm ci
+node scripts/render.mjs topics/tako.json --tts dummy --clips dummy --out out/test.mp4
+```

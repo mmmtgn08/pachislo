@@ -1,0 +1,20 @@
+{
+  "date": "2026-11-20",
+  "format": "list",
+  "animal": "タコ",
+  "title": "タコの体\nヤバすぎる3つのヒミツ",
+  "youtube_title": "タコの体、ヤバすぎる3つのヒミツ",
+  "series": "いきもの雑学",
+  "step_label": "ヒミツ",
+  "description": "心臓が3つ、血が青い、腕で考える。タコの体のヒミツを3つ紹介します。次に知りたい生き物をコメントで教えてください！",
+  "comment": "生まれ変わるならタコになりたい？なりたくない？",
+  "tags": ["タコ", "動物", "雑学", "生き物", "海の生き物", "いきもの雑学", "shorts"],
+  "scenes": [
+    {"text": "タコの心臓、実は3つあるって知ってた？", "telop": "", "query": "octopus close up", "alt": ["octopus eye", "octopus"], "se": "don"},
+    {"step": 1, "text": "ひとつめ。心臓は3つ。2つはエラに血を送り、1つは全身に血を送る。", "telop": "心臓が【3つ】\nエラ用2つ＋全身用1つ", "query": "octopus swimming", "alt": ["octopus ocean"], "se": "pop"},
+    {"step": 1, "text": "しかも泳ぐと、全身用の心臓が止まってしまう。だからタコは、泳ぐより歩くのが好き。", "telop": "泳ぐと心臓が【止まる】\nだから歩くのが好き", "query": "octopus crawling", "alt": ["octopus seabed", "octopus reef"], "se": "boo"},
+    {"step": 2, "text": "ふたつめ。血の色は青。銅をふくむ成分で、酸素を運んでいるから。", "telop": "血の色は【青】\n銅をふくむ成分のせい", "query": "octopus coral reef", "alt": ["octopus underwater", "blue ocean water"], "se": "kira"},
+    {"step": 3, "text": "みっつめ。神経細胞のおよそ3分の2は、腕にある。腕が自分で考えて動けるんだ。", "telop": "神経の約【3分の2】が腕\n腕が自分で考える", "query": "octopus tentacles", "alt": ["octopus arms", "octopus"], "se": "chan"},
+    {"text": "次はどの生き物のヒミツが知りたい？コメントで教えて！", "telop": "次はどの生き物？\n【コメント】で教えて！", "query": "octopus hiding", "alt": ["octopus", "ocean underwater"], "se": "kira"}
+  ]
+}

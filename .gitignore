@@ -3,3 +3,4 @@ __pycache__/
 *.pyc
 tools/client_secret*.json
 script.json
+node_modules/
