@@ -120,6 +120,16 @@ jobs:
           echo "video_id=$VID" >> "$GITHUB_OUTPUT"
           echo "### 投稿完了: https://youtube.com/shorts/$VID" >> "$GITHUB_STEP_SUMMARY"
 
+      - name: Post engagement comment
+        if: steps.upload.outputs.video_id != ''
+        continue-on-error: true
+        working-directory: .
+        env:
+          YT_CLIENT_ID: ${{ secrets.YT_CLIENT_ID }}
+          YT_CLIENT_SECRET: ${{ secrets.YT_CLIENT_SECRET }}
+          YT_REFRESH_TOKEN: ${{ secrets.YT_REFRESH_TOKEN }}
+        run: python moshimo/tools/comments.py post "${{ steps.upload.outputs.video_id }}" moshimo/script.json
+
       - name: Record history
         if: inputs.script_json != '' && inputs.dry_run != 'true' && steps.upload.outputs.video_id != ''
         run: |

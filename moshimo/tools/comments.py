@@ -2,6 +2,7 @@
 
   python tools/comments.py fetch            # 未対応の新しいコメントを comments/inbox.json に書く
   python tools/comments.py reply plan.json  # 返信を投稿し、対応済みを記録、リクエストを requests.md に追加
+  python tools/comments.py post <動画ID> <script.json>  # 投稿直後に、コメントを促すコメントを書き込む
 
 plan.json の形式:
   {"replies": [{"id": "<コメントID>", "text": "返信文"}],
@@ -132,8 +133,31 @@ def reply(plan_path: str) -> None:
     print(f"返信: {posted}件 / 対応済みに追加: {len(plan.get('skip', []))}件 / リクエスト: {len(reqs)}件")
 
 
+DEFAULT_COMMENTS = [
+    "次は何が消えたら見たい？思いついたの書いてって",
+    "どこが一番ヤバいと思った？",
+    "これ知ってた？知らなかったら🙋",
+    "次のネタ募集中、コメントのやつから作るよ",
+]
+
+
+def post(video_id: str, script_path: str) -> None:
+    """投稿した動画に、コメントを促すコメントを書き込む(固定は API では不可)。"""
+    script = json.loads(Path(script_path).read_text())
+    text = (script.get("comment") or "").strip()
+    if not text or len(text) > MAX_LEN or re.search(r"https?://|www\.", text):
+        day = int(datetime.now(JST).strftime("%j"))
+        text = DEFAULT_COMMENTS[day % len(DEFAULT_COMMENTS)]
+    resp = yt().commentThreads().insert(
+        part="snippet", body={"snippet": {"videoId": video_id, "topLevelComment": {"snippet": {"textOriginal": text}}}}
+    ).execute()
+    print(f"コメントを投稿: {resp['id']} / {text}")
+
+
 if __name__ == "__main__":
-    if len(sys.argv) >= 2 and sys.argv[1] == "fetch":
+    if len(sys.argv) >= 4 and sys.argv[1] == "post":
+        post(sys.argv[2], sys.argv[3])
+    elif len(sys.argv) >= 2 and sys.argv[1] == "fetch":
         fetch()
     elif len(sys.argv) >= 3 and sys.argv[1] == "reply":
         reply(sys.argv[2])
