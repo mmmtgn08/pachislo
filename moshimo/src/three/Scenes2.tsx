@@ -516,3 +516,126 @@ export const Animals: React.FC<SceneProps> = ({frame, frames, style, event = 'no
     </>
   );
 };
+
+// ───────── 畑: 作物・花・果樹・ハチ ─────────
+// event: none / vanish=ハチなどの虫が消える / wither=作物が枯れて実が落ちる / freeze / dark / rain / burn / wind / meteor
+const Bee: React.FC<{flap: number}> = ({flap}) => (
+  <group scale={0.55}>
+    <mesh scale={[1.3, 0.85, 0.85]}>
+      <sphereGeometry args={[0.13, 12, 10]} />
+      <meshStandardMaterial color="#facc15" roughness={0.5} />
+    </mesh>
+    {[-0.06, 0.06].map((x) => (
+      <mesh key={x} position={[x, 0, 0]} scale={[0.25, 0.9, 0.9]}>
+        <sphereGeometry args={[0.13, 10, 8]} />
+        <meshStandardMaterial color="#1f1f1f" roughness={0.5} />
+      </mesh>
+    ))}
+    {[-1, 1].map((z) => (
+      <mesh key={z} position={[0, 0.1, z * 0.1]} rotation={[z * (0.4 + flap), 0, 0]} scale={[0.6, 0.1, 1]}>
+        <sphereGeometry args={[0.13, 10, 8]} />
+        <meshStandardMaterial color="#e0f2fe" transparent opacity={0.7} />
+      </mesh>
+    ))}
+  </group>
+);
+
+export const Farm: React.FC<SceneProps> = ({frame, frames, style, event = 'none', variant}) => {
+  const at = eventAt(frames);
+  const fz = event === 'freeze' ? freezeK(frame, at) : 0;
+  const wk = event === 'wither' ? ease(prog(frame, at, at + frames * 0.45)) : 0;
+  const beesGone = event === 'vanish' ? ease(prog(frame, at, at + 8)) : event === 'wither' ? 1 : 0;
+  const leaf = (c: string) => iced('#' + new THREE.Color(c).lerp(new THREE.Color('#8b6b3d'), wk).getHexString(), fz);
+  const rows = useMemo(() => {
+    const out: {x: number; z: number; flower: string | null; s: number}[] = [];
+    for (let r = 0; r < 6; r++) {
+      for (let i = 0; i < 12; i++) {
+        const f = rnd(`fl${r}${i}`);
+        out.push({x: -6.6 + i * 1.2 + (r % 2) * 0.3, z: 1.5 - r * 1.3, flower: f > 0.45 ? ['#f472b6', '#fde047', '#ffffff', '#c084fc'][Math.floor(f * 10) % 4] : null, s: 0.8 + rnd(`fs${r}${i}`) * 0.4});
+      }
+    }
+    return out;
+  }, []);
+  const fruitTrees = useMemo(() => [-5, 0, 5].map((x, i) => ({x, z: -8.5 - (i % 2), fruits: new Array(9).fill(0).map((_, j) => ({p: [(rnd(`fr${i}${j}x`) - 0.5) * 1.6, 2.1 + rnd(`fr${i}${j}y`) * 0.9, 0.55 + rnd(`fr${i}${j}z`) * 0.25] as V3, d: rnd(`fr${i}${j}d`) * 0.6}))})), []);
+  const bees = useMemo(() => new Array(10).fill(0).map((_, i) => ({cx: -5 + rnd(`bx${i}`) * 10, cz: 1 - rnd(`bz${i}`) * 6, r: 0.4 + rnd(`br${i}`) * 0.6, ph: rnd(`bp${i}`) * 6, sp: 0.06 + rnd(`bs${i}`) * 0.05})), []);
+  const c = camPath(variant, [
+    [[0, 3.2, 7], [0, 2.4, 5.2], [0, 0.6, -1]],
+    [[-6, 2.2, 5], [-4.5, 1.8, 4], [0, 0.8, -2]],
+    [[3, 7, 5], [2, 5.5, 4], [0, 0, -2]],
+  ], frame, frames);
+  return (
+    <>
+      <Outdoor style={style} frame={frame} at={at} event={event === 'wither' || event === 'vanish' ? 'none' : event} fogNear={18} fogFar={60} />
+      <Cam pos={c.pos} look={c.look} />
+      <Ground color={iced(wk > 0 ? '#9a8a5a' : style.ground, fz)} size={90} />
+      {/* 畝(土の列) */}
+      {new Array(6).fill(0).map((_, r) => (
+        <mesh key={r} position={[0, 0.05, 1.5 - r * 1.3]} geometry={rbox(16, 0.14, 0.7, 0.06)}>
+          <meshStandardMaterial color={iced('#6b4a2b', fz)} roughness={1} />
+        </mesh>
+      ))}
+      {rows.map((p, i) => {
+        const droop = wk * (0.6 + (i % 3) * 0.2);
+        return (
+          <Affected key={i} event={event === 'wind' ? 'wind' : undefined} frame={frame} at={at} id={`cr${i}`} position={[p.x, 0.1, p.z]} power={0.4}>
+            <group scale={p.s * (1 - wk * 0.35)} rotation={[0, 0, droop * (i % 2 ? 1 : -1)]}>
+              <mesh position={[0, 0.25, 0]}>
+                <cylinderGeometry args={[0.03, 0.04, 0.5, 6]} />
+                <meshStandardMaterial color={leaf('#3f8f3a')} roughness={0.8} />
+              </mesh>
+              {[-1, 1].map((sd) => (
+                <mesh key={sd} position={[sd * 0.12, 0.3, 0]} rotation={[0, 0, sd * (0.8 + droop)]} scale={[1, 0.35, 0.6]}>
+                  <sphereGeometry args={[0.16, 10, 8]} />
+                  <meshStandardMaterial color={leaf('#4caf50')} roughness={0.8} />
+                </mesh>
+              ))}
+              {p.flower && (
+                <mesh position={[0, 0.56 - droop * 0.2, 0]}>
+                  <sphereGeometry args={[0.1, 12, 8]} />
+                  <meshStandardMaterial color={leaf(p.flower)} roughness={0.6} />
+                </mesh>
+              )}
+            </group>
+          </Affected>
+        );
+      })}
+      {/* 果樹: wither で実が落ちる */}
+      {fruitTrees.map((t, i) => (
+        <group key={i} position={[t.x, 0, t.z]}>
+          <Tree color={leaf('#2f8f3a')} seed={`ft${i}`} />
+          {t.fruits.map((f, j) => {
+            const fallT = Math.max(0, wk - f.d) * 3;
+            const y = Math.max(0.12, f.p[1] - fallT * fallT * 2.5);
+            return (
+              <mesh key={j} position={[f.p[0], y, f.p[2]]}>
+                <sphereGeometry args={[0.13, 12, 10]} />
+                <meshStandardMaterial color={wk > f.d + 0.3 ? '#7a3b1e' : '#e11d48'} roughness={0.5} />
+              </mesh>
+            );
+          })}
+        </group>
+      ))}
+      {/* 納屋 */}
+      <group position={[8, 0, -6]} rotation={[0, -0.5, 0]}>
+        <mesh position={[0, 1, 0]} geometry={rbox(3, 2, 2.4, 0.08)}>
+          <meshStandardMaterial color={iced('#b91c1c', fz)} roughness={0.8} />
+        </mesh>
+        <mesh position={[0, 2.5, 0]} rotation={[0, Math.PI / 4, 0]}>
+          <coneGeometry args={[2.3, 1.2, 4]} />
+          <meshStandardMaterial color="#f5f5f4" roughness={0.8} />
+        </mesh>
+      </group>
+      {/* ハチ: vanish で消える */}
+      {beesGone < 1 &&
+        bees.map((b, i) => {
+          const a = b.ph + frame * b.sp;
+          return (
+            <group key={i} position={[b.cx + Math.cos(a) * b.r, 0.9 + Math.sin(a * 2) * 0.2, b.cz + Math.sin(a) * b.r]} scale={1 - beesGone} rotation={[0, -a, 0]}>
+              <Bee flap={Math.sin(frame * 2.5 + i) * 0.6} />
+            </group>
+          );
+        })}
+      <Person position={[3.2, 0, -1.2]} rotationY={-0.6} color={style.people[0]} headShake={wk > 0.3 ? Math.sin(frame * 0.3) * 0.15 : 0} />
+    </>
+  );
+};

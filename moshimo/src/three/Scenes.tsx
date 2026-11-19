@@ -2,7 +2,7 @@ import React, {useMemo} from 'react';
 import * as THREE from 'three';
 import {Cam, Person, Stars} from './common';
 import {Building, Car, Ground, Realism, Road, Tree, rbox} from './models';
-import {Animals, Room, SkyScene, Space, Underwater} from './Scenes2';
+import {Animals, Farm, Room, SkyScene, Space, Underwater} from './Scenes2';
 import {Earth} from './Earth';
 import {Affected, Outdoor, darkK, eventAt, freezeK, iced} from './events';
 import {Style, ease, lerp, prog, rnd} from '../lib';
@@ -431,4 +431,5 @@ export const SCENES: Record<string, React.FC<SceneProps>> = {
   underwater: Underwater,
   room: Room,
   animals: Animals,
+  farm: Farm,
 };

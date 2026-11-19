@@ -47,8 +47,8 @@ const Telop: React.FC<{text: string; delay: number; st: Style}> = ({text, delay,
   // 2行目(結果)を強調色にする
   const [first, ...rest] = text.split('\n');
   return (
-    <div style={{position: 'absolute', left: 40, right: 40, top: 1080, display: 'flex', justifyContent: 'center', transform: `scale(${s})`}}>
-      <div style={{fontFamily: FONT, fontWeight: 900, fontSize: fitSize(text, 84, 940), lineHeight: 1.25, textAlign: 'center', whiteSpace: 'pre', ...stroke(14, st.telop.stroke)}}>
+    <div style={{position: 'absolute', left: 40, right: 150, top: 1080, display: 'flex', justifyContent: 'center', transform: `scale(${s})`}}>
+      <div style={{fontFamily: FONT, fontWeight: 900, fontSize: fitSize(text, 84, 820), lineHeight: 1.25, textAlign: 'center', whiteSpace: 'pre', ...stroke(14, st.telop.stroke)}}>
         <div style={{color: st.telop.fg}}>{first}</div>
         {rest.length > 0 && <div style={{color: st.telop.emph}}>{rest.join('\n')}</div>}
       </div>
@@ -71,7 +71,7 @@ const Countdown: React.FC<{at: number; label: string}> = ({at, label}) => {
 };
 
 const StatusBadge: React.FC<{label: string}> = ({label}) => (
-  <div style={{position: 'absolute', top: 40, right: 40, background: '#dc2626', color: '#fff', fontFamily: FONT, fontWeight: 900, fontSize: 42, padding: '10px 24px', borderRadius: 18, border: '4px solid #fff'}}>
+  <div style={{position: 'absolute', top: 380, right: 60, background: '#dc2626', color: '#fff', fontFamily: FONT, fontWeight: 900, fontSize: 42, padding: '10px 24px', borderRadius: 18, border: '4px solid #fff'}}>
     {label}
   </div>
 );
