@@ -35,7 +35,7 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 150 # 長尺動画(8〜12分)は描画に1時間前後かかる
     services:
       voicevox:
         image: voicevox/voicevox_engine:cpu-latest
@@ -84,7 +84,10 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: moshimo-video
-          path: moshimo/out/video.mp4
+          path: |
+            moshimo/out/video.mp4
+            moshimo/out/video.thumb.png
+          if-no-files-found: ignore
           retention-days: 14
 
       - name: Publish preview
@@ -120,6 +123,25 @@ jobs:
           echo "video_id=$VID" >> "$GITHUB_OUTPUT"
           echo "### 投稿完了: https://youtube.com/shorts/$VID" >> "$GITHUB_STEP_SUMMARY"
 
+      - name: Upload to TikTok
+        # TikTok の認証情報が登録されていれば、ショートを TikTok にも投稿する（失敗しても YouTube の記録は続ける）
+        id: tiktok
+        if: inputs.dry_run != 'true' && hashFiles('moshimo/out/video.thumb.png') == ''
+        continue-on-error: true
+        working-directory: .
+        env:
+          TIKTOK_CLIENT_KEY: ${{ secrets.TIKTOK_CLIENT_KEY }}
+          TIKTOK_CLIENT_SECRET: ${{ secrets.TIKTOK_CLIENT_SECRET }}
+          TIKTOK_REFRESH_TOKEN: ${{ secrets.TIKTOK_REFRESH_TOKEN }}
+          TIKTOK_PRIVACY: ${{ vars.TIKTOK_PRIVACY }}
+        run: |
+          if [ -z "$TIKTOK_REFRESH_TOKEN" ]; then
+            echo "TikTok の認証情報が未登録のため、TikTok への投稿はしません"
+            exit 0
+          fi
+          python moshimo/tools/tiktok.py upload moshimo/out/video.mp4 moshimo/out/video.meta.json
+          echo "### TikTok にも投稿しました" >> "$GITHUB_STEP_SUMMARY"
+
       - name: Post engagement comment
         if: steps.upload.outputs.video_id != ''
         continue-on-error: true
@@ -136,7 +158,7 @@ jobs:
           node scripts/record.mjs script.json out/video.meta.json "${{ steps.upload.outputs.video_id }}"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add history.jsonl topics/posted
+          git add history.jsonl topics/posted topics/posted_long 2>/dev/null || git add history.jsonl topics/posted
           git commit -m "Add moshimo short: $(date -u +%F)"
           for i in 1 2 3 4; do
             git pull --rebase -q && git push && exit 0

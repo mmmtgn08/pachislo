@@ -10,7 +10,7 @@
   const results = [];
 
   const fmtSize = (n) => (n < 1024 * 1024 ? `${(n / 1024).toFixed(0)}KB` : `${(n / 1024 / 1024).toFixed(2)}MB`);
-  const isHeic = (f) => /image\/hei[cf]/.test(f.type) || /\.hei[cf]$/i.test(f.name);
+  const isHeic = window.ImgCore.isHeic;
   const extOf = (type) => ({'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp'})[type] || 'jpg';
   const baseName = (name) => name.replace(/\.[^.]+$/, '');
 
@@ -28,27 +28,7 @@
     upd();
   }
 
-  // ── HEIC 読み込み（Safari 以外はライブラリを必要なときだけ読む）──
-  let heicLib;
-  const loadHeicLib = () =>
-    (heicLib ||= new Promise((ok, ng) => {
-      const s = document.createElement('script');
-      s.src = 'https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js';
-      s.onload = () => ok(window.heic2any);
-      s.onerror = () => ng(new Error('HEIC 変換ライブラリを読み込めませんでした'));
-      document.head.appendChild(s);
-    }));
-
-  async function decode(file) {
-    try {
-      return await createImageBitmap(file);
-    } catch (e) {
-      if (!isHeic(file)) throw new Error('この画像は読み込めませんでした');
-      const heic2any = await loadHeicLib();
-      const out = await heic2any({blob: file, toType: 'image/png'});
-      return await createImageBitmap(Array.isArray(out) ? out[0] : out);
-    }
-  }
+  const decode = window.ImgCore.decodeImage;
 
   // ── JPEG の EXIF から、残っている情報を調べる ──
   async function readExif(file) {

@@ -13,6 +13,12 @@ const fitSize = (text: string, maxPx: number, width: number) => {
   return Math.min(maxPx, Math.floor(width / Math.max(1, longest)));
 };
 
+/** 横長(長尺動画)かどうか */
+const useWide = () => {
+  const {width, height} = useVideoConfig();
+  return width > height;
+};
+
 const stroke = (w: number, color = '#000'): React.CSSProperties => ({
   WebkitTextStroke: `${w}px ${color}`,
   paintOrder: 'stroke fill',
@@ -20,19 +26,21 @@ const stroke = (w: number, color = '#000'): React.CSSProperties => ({
 
 const Title: React.FC<{title: string; badge: string; introFrames: number; st: Style}> = ({title, badge, introFrames, st}) => {
   const frame = useCurrentFrame();
+  const wide = useWide();
   const inIntro = frame < introFrames;
   const t = ease(prog(frame, introFrames, introFrames + 10));
-  const s = inIntro ? pop(frame, 0, 10) * (1 + 0.015 * Math.sin(frame * 0.25)) : interpolate(t, [0, 1], [1, 0.72]);
-  const top = inIntro ? 620 : interpolate(t, [0, 1], [620, 150]);
+  const s = inIntro ? pop(frame, 0, 10) * (1 + 0.015 * Math.sin(frame * 0.25)) : interpolate(t, [0, 1], [1, wide ? 0.5 : 0.72]);
+  const [y0, y1] = wide ? [300, 30] : [620, 150];
+  const top = inIntro ? y0 : interpolate(t, [0, 1], [y0, y1]);
   return (
     <div style={{position: 'absolute', left: 0, right: 0, top, display: 'flex', justifyContent: 'center', transform: `scale(${s})`, transformOrigin: 'center top'}}>
-      <div style={{position: 'relative', background: st.title.box, border: `8px solid ${st.title.border}`, borderRadius: 36, padding: '34px 46px 30px', maxWidth: 980}}>
+      <div style={{position: 'relative', background: st.title.box, border: `8px solid ${st.title.border}`, borderRadius: 36, padding: '34px 46px 30px', maxWidth: wide ? 1500 : 980}}>
         {badge && (
           <div style={{position: 'absolute', top: -40, left: 30, background: '#e11d48', color: '#fff', fontFamily: FONT, fontWeight: 900, fontSize: 40, padding: '6px 26px', borderRadius: 20, border: '4px solid #fff'}}>
             {badge}
           </div>
         )}
-        <div style={{fontFamily: FONT, fontWeight: 900, fontSize: fitSize(title, 92, 860), lineHeight: 1.2, color: st.title.fg, textAlign: 'center', whiteSpace: 'pre', ...stroke(10, st.title.stroke)}}>
+        <div style={{fontFamily: FONT, fontWeight: 900, fontSize: fitSize(title, wide ? 110 : 92, wide ? 1380 : 860), lineHeight: 1.2, color: st.title.fg, textAlign: 'center', whiteSpace: 'pre', ...stroke(10, st.title.stroke)}}>
           {title}
         </div>
       </div>
@@ -42,13 +50,14 @@ const Title: React.FC<{title: string; badge: string; introFrames: number; st: St
 
 const Telop: React.FC<{text: string; delay: number; st: Style}> = ({text, delay, st}) => {
   const frame = useCurrentFrame();
+  const wide = useWide();
   const s = pop(frame, delay, 8);
   if (s <= 0 || !text) return null;
   // 2行目(結果)を強調色にする
   const [first, ...rest] = text.split('\n');
   return (
-    <div style={{position: 'absolute', left: 40, right: 150, top: 1080, display: 'flex', justifyContent: 'center', transform: `scale(${s})`}}>
-      <div style={{fontFamily: FONT, fontWeight: 900, fontSize: fitSize(text, 84, 820), lineHeight: 1.25, textAlign: 'center', whiteSpace: 'pre', ...stroke(14, st.telop.stroke)}}>
+    <div style={{position: 'absolute', left: wide ? 120 : 40, right: wide ? 120 : 150, ...(wide ? {bottom: 70} : {top: 1080}), display: 'flex', justifyContent: 'center', transform: `scale(${s})`, transformOrigin: wide ? 'center bottom' : 'center'}}>
+      <div style={{fontFamily: FONT, fontWeight: 900, fontSize: fitSize(text, wide ? 76 : 84, wide ? 1500 : 820), lineHeight: 1.25, textAlign: 'center', whiteSpace: 'pre', ...stroke(14, st.telop.stroke)}}>
         <div style={{color: st.telop.fg}}>{first}</div>
         {rest.length > 0 && <div style={{color: st.telop.emph}}>{rest.join('\n')}</div>}
       </div>
@@ -58,20 +67,21 @@ const Telop: React.FC<{text: string; delay: number; st: Style}> = ({text, delay,
 
 const Countdown: React.FC<{at: number; label: string}> = ({at, label}) => {
   const frame = useCurrentFrame();
+  const wide = useWide();
   if (frame >= at + 30) return null;
   const step = at / 3;
   const n = frame < at ? 3 - Math.floor(frame / step) : 0;
   const local = frame < at ? frame % step : frame - at;
   const s = pop(local, 0, 6);
   return (
-    <div style={{position: 'absolute', left: 0, right: 0, top: 700, display: 'flex', justifyContent: 'center', transform: `scale(${s})`}}>
+    <div style={{position: 'absolute', left: 0, right: 0, top: wide ? 260 : 700, display: 'flex', justifyContent: 'center', transform: `scale(${s})`}}>
       <div style={{fontFamily: FONT, fontWeight: 900, fontSize: n ? 300 : 140, color: n ? '#fff' : '#ff2d2d', ...stroke(18)}}>{n ? n : label}</div>
     </div>
   );
 };
 
 const StatusBadge: React.FC<{label: string}> = ({label}) => (
-  <div style={{position: 'absolute', top: 380, right: 60, background: '#dc2626', color: '#fff', fontFamily: FONT, fontWeight: 900, fontSize: 42, padding: '10px 24px', borderRadius: 18, border: '4px solid #fff'}}>
+  <div style={{position: 'absolute', top: useWide() ? 40 : 380, right: useWide() ? 50 : 60, background: '#dc2626', color: '#fff', fontFamily: FONT, fontWeight: 900, fontSize: 42, padding: '10px 24px', borderRadius: 18, border: '4px solid #fff'}}>
     {label}
   </div>
 );
@@ -81,8 +91,9 @@ const Timer: React.FC<{value: number; total: number; decimals: number; unit: str
   const frame = useCurrentFrame();
   const p = Math.min(1, value / Math.max(0.0001, total));
   const r = 54, circ = 2 * Math.PI * r;
+  const wide = useWide();
   return (
-    <div style={{position: 'absolute', left: 34, top: 470, display: 'flex', alignItems: 'center', gap: 10}}>
+    <div style={{position: 'absolute', left: wide ? 40 : 34, top: wide ? 30 : 470, display: 'flex', alignItems: 'center', gap: 10, transform: wide ? 'scale(0.7)' : undefined, transformOrigin: 'left top'}}>
       <svg width={128} height={128} viewBox="0 0 128 128">
         <circle cx={64} cy={64} r={r} fill="rgba(0,0,0,0.55)" stroke="rgba(255,255,255,0.25)" strokeWidth={10} />
         <circle cx={64} cy={64} r={r} fill="none" stroke={done ? '#22c55e' : '#ff3b3b'} strokeWidth={10} strokeLinecap="round"
@@ -146,8 +157,9 @@ const SceneView: React.FC<{scene: Scene; index: number; st: Style; showCountdown
 const Cta: React.FC<{text: string}> = ({text}) => {
   const frame = useCurrentFrame();
   const s = pop(frame, 10, 10) * (1 + 0.04 * Math.sin(frame * 0.25));
+  const wide = useWide();
   return (
-    <div style={{position: 'absolute', left: 0, right: 0, top: 1420, display: 'flex', justifyContent: 'center', transform: `scale(${s})`}}>
+    <div style={{position: 'absolute', left: 0, right: 0, top: wide ? 200 : 1420, display: 'flex', justifyContent: 'center', transform: `scale(${s})`}}>
       <div style={{background: '#e11d1d', color: '#fff', fontFamily: FONT, fontWeight: 900, fontSize: 50, padding: '18px 46px', borderRadius: 60, border: '6px solid #fff'}}>▶ {text}</div>
     </div>
   );
@@ -199,9 +211,11 @@ export const Main: React.FC<MoshimoProps> = ({title, badge, cta, zeroLabel, stat
       {timer && frame >= zeroAt && (
         <Timer value={storyTime} total={timer.duration} decimals={timer.decimals} unit={timer.unit} label={timer.label} done={storyTime >= timer.duration} />
       )}
-      <Sequence from={starts[last]} durationInFrames={scenes[last].frames}>
-        <Cta text={cta} />
-      </Sequence>
+      {cta && (
+        <Sequence from={starts[last]} durationInFrames={scenes[last].frames}>
+          <Cta text={cta} />
+        </Sequence>
+      )}
     </AbsoluteFill>
   );
 };

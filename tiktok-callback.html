@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TikTok 連携</title>
+<meta name="robots" content="noindex">
+<style>
+  :root { --bg: #0f172a; --text: #f1f5f9; --muted: #94a3b8; --accent: #38bdf8; }
+  body { background: var(--bg); color: var(--text); font-family: 'Noto Sans JP', sans-serif; line-height: 1.8; margin: 0; padding: 24px 16px; }
+  main { max-width: 720px; margin: 0 auto; }
+  h1 { font-size: 22px; } h2 { font-size: 17px; margin-top: 28px; color: var(--accent); }
+  p { font-size: 15px; } small { color: var(--muted); }
+  a { color: var(--accent); }
+</style>
+</head>
+<body>
+<main>
+<h1>TikTok 連携の認可コード</h1>
+<p id="msg">このページは、運営者が自分の TikTok アカウントを投稿ツールに連携するときにだけ使います。</p>
+<p><code id="code" style="word-break:break-all;font-size:15px"></code></p>
+<p><button id="copy" hidden style="font:inherit;padding:8px 16px;border-radius:8px;border:0;background:#38bdf8;color:#0f172a;font-weight:700">コードをコピー</button></p>
+<p><small>コピーしたコードを <code>python tools/tiktok.py token &lt;コード&gt;</code> に渡すと、リフレッシュトークンを取得できます。コードは数分で使えなくなります。このページはコードをどこにも送信しません。</small></p>
+<script>
+  const q = new URLSearchParams(location.search);
+  const code = q.get('code'), err = q.get('error');
+  const el = document.getElementById('code'), btn = document.getElementById('copy');
+  if (code) { el.textContent = code; btn.hidden = false; btn.onclick = () => navigator.clipboard.writeText(code).then(() => btn.textContent = 'コピーしました'); }
+  else if (err) { el.textContent = 'エラー: ' + err + ' ' + (q.get('error_description') || ''); }
+</script>
+</main>
+</body>
+</html>

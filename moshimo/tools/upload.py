@@ -1,4 +1,5 @@
-"""YouTube Data API v3 でショートをアップロードする。
+"""YouTube Data API v3 で動画(ショート・長尺)をアップロードする。
+メタデータに thumbnail があれば、サムネイルも設定する(電話番号で確認済みのチャンネルのみ可)。
 
   python tools/upload.py out/video.mp4 out/video.meta.json   → 動画IDを出力
 
@@ -10,6 +11,7 @@
 from __future__ import annotations
 
 import os
+import sys
 from pathlib import Path
 
 from google.oauth2.credentials import Credentials
@@ -55,7 +57,16 @@ def upload(video: Path, script: dict) -> str:
     resp = None
     while resp is None:
         _, resp = req.next_chunk()
-    return resp["id"]
+    vid = resp["id"]
+    thumb = script.get("thumbnail")
+    if thumb:
+        path = video.parent / thumb
+        try:
+            yt.thumbnails().set(videoId=vid, media_body=MediaFileUpload(str(path), mimetype="image/png")).execute()
+            print(f"サムネイルを設定しました: {path.name}", file=sys.stderr)
+        except Exception as e:  # 未確認チャンネルなどでは失敗する。動画の投稿は成功しているので続ける
+            print(f"::warning::サムネイルを設定できませんでした（YouTube のチャンネル確認が必要な場合があります）: {e}", file=sys.stderr)
+    return vid
 
 
 if __name__ == "__main__":

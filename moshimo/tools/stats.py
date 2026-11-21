@@ -81,7 +81,7 @@ def report(stats: dict, videos: list[dict]) -> str:
         if not s:
             continue
         posted = date.fromisoformat(v["date"])
-        if (today - posted).days < 90:
+        if (today - posted).days < 90 and v.get("format", "short") == "short":
             recent90 += s["view"]
         rows.append((v, s))
     ch = stats["channel"]
@@ -96,7 +96,8 @@ def report(stats: dict, videos: list[dict]) -> str:
         "| 項目 | 今 | 条件 | 達成率 |",
         "|---|---|---|---|",
         f"| 登録者 | {fmt(ch['subscribers'])}人 | {fmt(YPP_SUBS)}人 | {min(100, ch['subscribers'] * 100 / YPP_SUBS):.1f}% |",
-        f"| 直近90日に投稿した動画の再生 | {fmt(recent90)}回 | {fmt(YPP_SHORTS_VIEWS_NOW)}回 | {recent90 * 100 / YPP_SHORTS_VIEWS_NOW:.2f}% |",
+        f"| 直近90日に投稿したショートの再生 | {fmt(recent90)}回 | {fmt(YPP_SHORTS_VIEWS_NOW)}回 | {recent90 * 100 / YPP_SHORTS_VIEWS_NOW:.2f}% |",
+        f"| （別ルート）長尺の総再生時間 | YouTube Studio で確認 | 4,000時間/12か月 | — |",
         "",
         f"- 今の条件（90日で1,000万回）で申し込めるのは **2027年1月31日まで（あと{days_left}日）**。2月1日からは2,000万回になる",
         "- 「直近90日に投稿した動画の再生」は目安。正確な数字（90日間の有効視聴回数）は YouTube Studio の「収益化」画面で確認する",
@@ -109,7 +110,9 @@ def report(stats: dict, videos: list[dict]) -> str:
     ]
     for v, s in sorted(rows, key=lambda r: -r[1]["view"]):
         title = v["title"].replace(" #shorts", "").replace("|", "／")
-        url = f"https://youtube.com/shorts/{v['video_id']}"
+        if v.get("format") == "long":
+            title = "【長尺】" + title
+        url = f"https://youtube.com/{'watch?v=' if v.get('format') == 'long' else 'shorts/'}{v['video_id']}"
         lines.append(f"| {v['date']} | [{title}]({url}) | {fmt(s['view'])} | {fmt(s['like'])} | {fmt(s['comment'])} |")
     if rows:
         avg = sum(s["view"] for _, s in rows) / len(rows)

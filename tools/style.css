@@ -164,3 +164,18 @@ footer a { color: var(--muted); margin: 0 6px; }
   .files li > :last-child { grid-column: 1 / -1; }
   .files img { width: 48px; height: 48px; }
 }
+
+/* PDF・QR */
+.pdf-icon {
+  width: 56px; height: 56px; border-radius: 6px; background: #dc2626; color: #fff;
+  display: grid; place-items: center; font-weight: 800; font-size: 14px;
+}
+button.sm { padding: 4px 10px; font-size: 14px; }
+.out { margin-top: 12px; }
+.out p { margin: 6px 0; }
+.warn { color: var(--warn); }
+.qr-view { display: grid; place-items: center; margin-top: 12px; min-height: 200px; }
+.qr-view svg { width: min(280px, 100%); height: auto; border-radius: 8px; }
+.qr-view .placeholder { color: var(--muted); font-size: 14px; text-align: center; }
+.options input[type="color"] { width: 100%; height: 38px; padding: 2px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); }
+@media (max-width: 520px) { .pdf-icon { width: 48px; height: 48px; } }
