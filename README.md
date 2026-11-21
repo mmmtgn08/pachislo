@@ -43,3 +43,26 @@ node scripts/render.mjs topics/gravity.json --tts dummy --out out/test.mp4
 - 概要欄に「VOICEVOX:青山龍星」のクレジットを自動記載しています
 - BGM は毎回プログラムで合成しています（動画ごとにテンポ・コード進行・音色が変わる）。音量はリポジトリ変数ではなく `BGM_VOLUME`（既定 0.15）で調整できます
 - `index.html`（スロット収支アプリ）と `privacy.html`（OAuth 用プライバシーポリシー）は GitHub Pages で公開しています
+
+---
+
+# かんたんツール箱（`tools/`）
+
+ブラウザだけで動く無料ツール集。GitHub Pages で公開し、アクセスが集まったら広告（Google AdSense）で収益化する。
+ファイルや文章はブラウザの中だけで処理し、サーバーには送らない。
+
+| ページ | 内容 |
+|---|---|
+| `tools/index.html` | ツール一覧 |
+| `tools/moji-count/` | 文字数カウント（空白除外・原稿用紙・X の残り文字数・バイト数） |
+| `tools/image-compress/` | 画像圧縮・リサイズ（複数枚・HEIC 対応） |
+| `tools/image-convert/` | 画像の形式変換（HEIC→JPG、PNG/JPG/WebP） |
+| `tools/exif-remove/` | 写真の位置情報（Exif）の確認と削除 |
+| `tools/about.html` | 運営者情報・プライバシーポリシー（AdSense の審査に必要） |
+| `tools/style.css` / `tools/img.js` | 共通の見た目 / 画像処理 |
+
+広告を入れるときは、各ページの `<div class="ad-slot">` に広告コードを入れる。
+
+# 再生数レポート（`moshimo/STATS.md`）
+
+`moshimo-stats` ワークフローが毎朝 6:17（日本時間）に動画ごとの再生数を取得し、`moshimo/STATS.md` に収益化条件までの進み具合をまとめる。毎日の台本づくりもこのレポートを参考にする。

@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>写真の位置情報（GPS・Exif）を削除（無料・登録不要）｜かんたんツール箱</title>
+<meta name="description" content="写真に記録された位置情報（GPS）・撮影日時・機種などのExif情報を、ブラウザだけで確認して削除します。SNSやフリマに載せる前の自宅バレ対策に。画像はサーバーに送信されません。">
+<meta property="og:title" content="写真の位置情報（GPS・Exif）を削除（無料・登録不要）｜かんたんツール箱">
+<meta property="og:description" content="写真に記録された位置情報（GPS）・撮影日時・機種などのExif情報を、ブラウザだけで確認して削除します。SNSやフリマに載せる前の自宅バレ対策に。画像はサーバーに送信されません。">
+<meta property="og:type" content="website">
+<link rel="stylesheet" href="../style.css">
+<script type="application/ld+json">[{"@context": "https://schema.org", "@type": "WebApplication", "name": "写真の位置情報（Exif）削除", "description": "写真に記録された位置情報（GPS）・撮影日時・機種などのExif情報を、ブラウザだけで確認して削除します。SNSやフリマに載せる前の自宅バレ対策に。画像はサーバーに送信されません。", "applicationCategory": "UtilitiesApplication", "operatingSystem": "Any", "inLanguage": "ja", "offers": {"@type": "Offer", "price": "0", "priceCurrency": "JPY"}}, {"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "本当に位置情報は消えますか？", "acceptedAnswer": {"@type": "Answer", "text": "はい。画像を描き直して保存するため、位置情報・撮影日時・機種などの Exif 情報は新しい画像にまったく含まれません。"}}, {"@type": "Question", "name": "画質は落ちますか？", "acceptedAnswer": {"@type": "Answer", "text": "画質 95% で保存するため、見た目の違いはほとんどありません。PNG を選ぶと画質は落ちません。"}}, {"@type": "Question", "name": "写真はどこかに送られますか？", "acceptedAnswer": {"@type": "Answer", "text": "いいえ。処理はすべてお使いのブラウザの中で行います。"}}, {"@type": "Question", "name": "PNG や HEIC の写真でも消せますか？", "acceptedAnswer": {"@type": "Answer", "text": "消せます。残っていた情報の表示は JPG のみ対応ですが、どの形式でも情報を含まない画像として保存します。"}}]}]</script>
+</head>
+<body>
+<header class="site-header"><div class="inner"><a class="logo" href="../">かんたん<span>ツール箱</span></a><nav><a href="../">ツール一覧</a></nav></div></header>
+<main>
+<span class="badge">無料・登録不要・アップロードなし</span>
+<h1>写真の位置情報（Exif）削除</h1>
+<p class="lead">スマホの写真には、撮った場所（GPS）や日時が記録されていることがあります。SNS・ブログ・フリマアプリに載せる前に、残っている情報を確認して消せます。</p>
+<div class="card">
+<div id="drop" class="drop" tabindex="0" role="button" aria-label="画像を選ぶ">
+<strong>ここに画像をドロップ</strong>
+<small>またはタップして選ぶ（複数OK・貼り付けもOK）／ JPG・PNG・WebP・HEIC（iPhone）</small>
+</div>
+<input id="file" type="file" accept="image/*,.heic,.heif" multiple hidden>
+<div class="options">
+<label>保存する形式<select id="format"><option value="keep" selected>元と同じ（HEICはJPG）</option><option value="image/jpeg">JPG（写真向け・一番使える）</option><option value="image/png">PNG（文字・図・透明）</option><option value="image/webp">WebP（軽い・Web向け）</option></select></label><label><span>画質 <b id="qualityLabel"></b>%（低いほど軽くなる）</span><input id="quality" type="range" min="30" max="100" value="95"></label>
+</div>
+<ul id="files" class="files"></ul>
+<div class="row" style="margin-top:12px"><button id="saveAll" hidden>すべて保存</button></div>
+</div>
+<div class="ad-slot" data-ad="tool"></div>
+
+<div class="note">写真をこのページに入れると、残っていた情報（位置情報・機種・撮影日時）を表示し、それらを含まない画像を作ります。写真はお使いの端末から外に出ません。</div>
+
+<h2>写真に残っている情報とは</h2>
+<p>スマホやデジカメの写真には「Exif（イグジフ）」という情報が一緒に保存されます。設定によっては、撮影した場所の緯度・経度まで記録されます。自宅で撮った写真をそのまま公開すると、住んでいる場所が分かってしまうおそれがあります。</p>
+<p>多くの SNS は投稿時に位置情報を自動で消しますが、ブログ・メール・ファイル共有・一部のサービスでは残ったまま届くことがあります。心配なときは、公開前にこのページで消しておくと安心です。</p>
+
+<h2>これから撮る写真に位置情報を残さない設定</h2>
+<ul>
+<li><b>iPhone</b>: 「設定」→「プライバシーとセキュリティ」→「位置情報サービス」→「カメラ」→「なし」</li>
+<li><b>Android</b>: カメラアプリの設定で「位置情報タグ」「位置情報を保存」をオフ（機種によって名前が違います）</li>
+</ul>
+<h2>よくある質問</h2>
+<dl class="faq">
+<dt>本当に位置情報は消えますか？</dt><dd>はい。画像を描き直して保存するため、位置情報・撮影日時・機種などの Exif 情報は新しい画像にまったく含まれません。</dd>
+<dt>画質は落ちますか？</dt><dd>画質 95% で保存するため、見た目の違いはほとんどありません。PNG を選ぶと画質は落ちません。</dd>
+<dt>写真はどこかに送られますか？</dt><dd>いいえ。処理はすべてお使いのブラウザの中で行います。</dd>
+<dt>PNG や HEIC の写真でも消せますか？</dt><dd>消せます。残っていた情報の表示は JPG のみ対応ですが、どの形式でも情報を含まない画像として保存します。</dd>
+</dl>
+</main>
+<footer><a href="../">ツール一覧</a><a href="../about.html">運営者情報・プライバシー</a><br>ファイルや文章はお使いのブラウザの中だけで処理され、サーバーには送信されません。</footer>
+<script>window.IMG_TOOL = {mode: "exif"};</script>
+<script src="../img.js"></script>
+</body>
+</html>
