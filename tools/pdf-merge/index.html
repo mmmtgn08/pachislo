@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PDF結合（無料・登録不要・アップロードなし）｜かんたんツール箱</title>
+<meta name="description" content="複数のPDFファイルを1つにまとめます。順番の並べ替えもかんたん。ファイルはブラウザの中だけで処理し、サーバーに送信しないので、契約書や書類も安心して扱えます。">
+<meta property="og:title" content="PDF結合（無料・登録不要・アップロードなし）｜かんたんツール箱">
+<meta property="og:description" content="複数のPDFファイルを1つにまとめます。順番の並べ替えもかんたん。ファイルはブラウザの中だけで処理し、サーバーに送信しないので、契約書や書類も安心して扱えます。">
+<meta property="og:type" content="website">
+<link rel="stylesheet" href="../style.css">
+<script type="application/ld+json">[{"@context": "https://schema.org", "@type": "WebApplication", "name": "PDF結合", "description": "複数のPDFファイルを1つにまとめます。順番の並べ替えもかんたん。ファイルはブラウザの中だけで処理し、サーバーに送信しないので、契約書や書類も安心して扱えます。", "applicationCategory": "UtilitiesApplication", "operatingSystem": "Any", "inLanguage": "ja", "offers": {"@type": "Offer", "price": "0", "priceCurrency": "JPY"}}, {"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "PDFはアップロードされますか？", "acceptedAnswer": {"@type": "Answer", "text": "いいえ。結合はお使いのブラウザの中だけで行い、ファイルがサーバーに送られることはありません。"}}, {"@type": "Question", "name": "パスワード付きのPDFは結合できますか？", "acceptedAnswer": {"@type": "Answer", "text": "パスワードで保護された PDF は扱えません。先に保護を解除してください。"}}, {"@type": "Question", "name": "ファイル数や容量の上限は？", "acceptedAnswer": {"@type": "Answer", "text": "上限は決めていません。ただし数百MBを超えるような大きなファイルは、端末のメモリによっては時間がかかったり失敗したりします。"}}, {"@type": "Question", "name": "スマホでも使えますか？", "acceptedAnswer": {"@type": "Answer", "text": "使えます。iPhone では保存したPDFが「ファイル」アプリに入ります。"}}]}]</script>
+</head>
+<body>
+<header class="site-header"><div class="inner"><a class="logo" href="../">かんたん<span>ツール箱</span></a><nav><a href="../">ツール一覧</a></nav></div></header>
+<main>
+<span class="badge">無料・登録不要・アップロードなし</span>
+<h1>PDF結合</h1>
+<p class="lead">複数の PDF を1つのファイルにまとめます。書類はお使いの端末から外に出ないので、見積書・契約書・申請書類にも使えます。</p>
+<div class="card">
+<div id="drop" class="drop" tabindex="0" role="button" aria-label="PDFを選ぶ">
+<strong>ここにPDFをドロップ</strong>
+<small>またはタップして選ぶ（2つ以上・何個でもOK）</small>
+</div>
+<input id="file" type="file" accept="application/pdf,.pdf" multiple hidden>
+<ul id="files" class="files"></ul>
+
+<div class="row" style="margin-top:12px"><button id="run" disabled>結合する</button></div>
+<div id="out" class="out"></div>
+</div>
+<div class="ad-slot" data-ad="tool"></div>
+
+<h2>使い方</h2>
+<ol>
+<li>まとめたい PDF をドロップするか、枠をタップして選びます（あとから追加もできます）。</li>
+<li>↑↓ ボタンで順番を並べ替えます。いらないファイルは ✕ で外します。</li>
+<li>「結合する」を押して、できた PDF を保存します。</li>
+</ol>
+<h2>よくある質問</h2>
+<dl class="faq">
+<dt>PDFはアップロードされますか？</dt><dd>いいえ。結合はお使いのブラウザの中だけで行い、ファイルがサーバーに送られることはありません。</dd>
+<dt>パスワード付きのPDFは結合できますか？</dt><dd>パスワードで保護された PDF は扱えません。先に保護を解除してください。</dd>
+<dt>ファイル数や容量の上限は？</dt><dd>上限は決めていません。ただし数百MBを超えるような大きなファイルは、端末のメモリによっては時間がかかったり失敗したりします。</dd>
+<dt>スマホでも使えますか？</dt><dd>使えます。iPhone では保存したPDFが「ファイル」アプリに入ります。</dd>
+</dl>
+</main>
+<footer><a href="../">ツール一覧</a><a href="../about.html">運営者情報・プライバシー</a><br>ファイルや文章はお使いのブラウザの中だけで処理され、サーバーには送信されません。</footer>
+<script src="../vendor/pdf-lib.min.js"></script>
+<script>window.PDF_TOOL = {mode: "merge"};</script>
+<script src="../pdf.js"></script>
+</body>
+</html>
