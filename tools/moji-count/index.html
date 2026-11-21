@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>文字数カウント（原稿用紙換算・X/Twitter・空白除外）｜かんたんツール箱</title>
+<meta name="description" content="入力した文章の文字数をリアルタイムで数えます。空白・改行を除いた文字数、原稿用紙換算、X（Twitter）の残り文字数、バイト数、読む時間の目安まで一度に表示。文章はサーバーに送信されません。">
+<meta property="og:title" content="文字数カウント（原稿用紙換算・X/Twitter・空白除外）｜かんたんツール箱">
+<meta property="og:description" content="入力した文章の文字数をリアルタイムで数えます。空白・改行を除いた文字数、原稿用紙換算、X（Twitter）の残り文字数、バイト数、読む時間の目安まで一度に表示。文章はサーバーに送信されません。">
+<meta property="og:type" content="website">
+<link rel="stylesheet" href="../style.css">
+<script type="application/ld+json">[{"@context": "https://schema.org", "@type": "WebApplication", "name": "文字数カウント", "description": "入力した文章の文字数をリアルタイムで数えます。空白・改行を除いた文字数、原稿用紙換算、X（Twitter）の残り文字数、バイト数、読む時間の目安まで一度に表示。文章はサーバーに送信されません。", "applicationCategory": "UtilitiesApplication", "operatingSystem": "Any", "inLanguage": "ja", "offers": {"@type": "Offer", "price": "0", "priceCurrency": "JPY"}}, {"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "入力した文章はどこかに送られますか？", "acceptedAnswer": {"@type": "Answer", "text": "いいえ。数えるのはお使いのブラウザの中だけで、文章がサーバーに送られることはありません。"}}, {"@type": "Question", "name": "Word の文字数と違うのはなぜ？", "acceptedAnswer": {"@type": "Answer", "text": "Word は半角英単語を「単語」としてまとめて数えるなど、数え方が違うことがあります。このツールは1文字ずつ数えます。"}}, {"@type": "Question", "name": "原稿用紙の枚数が手書きと少し違います", "acceptedAnswer": {"@type": "Answer", "text": "句読点を行の最後にぶら下げる、かぎかっこの扱いなど、手書きの細かい決まりまでは再現していません。目安としてお使いください。"}}, {"@type": "Question", "name": "X（Twitter）で全角140文字というのは？", "acceptedAnswer": {"@type": "Answer", "text": "X は半角英数字を1、日本語などの全角文字を2として、合計280までを1回の投稿にできます。そのため全角だけだと140文字です。"}}]}]</script>
+</head>
+<body>
+<header class="site-header"><div class="inner"><a class="logo" href="../">かんたん<span>ツール箱</span></a><nav><a href="../">ツール一覧</a></nav></div></header>
+<main>
+<span class="badge">無料・登録不要・入力内容は送信されません</span>
+<h1>文字数カウント</h1>
+<p class="lead">レポート・ES（エントリーシート）・ブログ・SNS 投稿の文字数を、入力しながら数えます。</p>
+<div class="card">
+<textarea id="text" placeholder="ここに文章を入力、または貼り付け" aria-label="文章"></textarea>
+<div class="stats">
+<div class="stat main"><div class="k">文字数（空白・改行込み）</div><div class="v" id="all">0</div></div>
+<div class="stat main"><div class="k">空白・改行を除く</div><div class="v" id="noSpace">0</div></div>
+<div class="stat"><div class="k">改行だけ除く</div><div class="v" id="noBreak">0</div></div>
+<div class="stat"><div class="k">行数 / 段落数</div><div class="v"><span id="lines">0</span> / <span id="paras">0</span></div></div>
+<div class="stat"><div class="k">原稿用紙（400字詰）</div><div class="v"><span id="genko">0</span>枚 <small id="genkoLines" style="font-size:13px;font-weight:400"></small></div></div>
+<div class="stat"><div class="k">読む時間の目安</div><div class="v" id="read">0秒</div></div>
+<div class="stat"><div class="k">X（Twitter）残り</div><div class="v" id="x">280</div></div>
+<div class="stat"><div class="k">全角 / 半角</div><div class="v"><span id="zen">0</span> / <span id="han">0</span></div></div>
+<div class="stat"><div class="k">バイト数（UTF-8 / Shift_JIS）</div><div class="v"><span id="utf8">0</span> / <span id="sjis">0</span></div></div>
+</div>
+<div class="row">
+<label>目標の文字数 <input id="goal" type="number" min="0" step="50" placeholder="例: 400" style="width:110px"></label>
+<span id="goalText" style="font-size:14px;color:var(--muted)"></span>
+</div>
+<div class="bar" id="goalBar" hidden style="margin-top:8px"><i></i></div>
+<div class="row" style="margin-top:14px">
+<button id="copy" class="ghost">文章をコピー</button>
+<button id="clear" class="ghost">消す</button>
+<small style="color:var(--muted)">入力中の文章はこの端末にだけ自動で保存されます。</small>
+</div>
+</div>
+<div class="ad-slot" data-ad="tool"></div>
+
+<h2>数え方について</h2>
+<ul>
+<li><b>文字数</b>: 絵文字や「が」のような濁点つきの文字も、見た目どおり1文字として数えます。</li>
+<li><b>空白・改行を除く</b>: 全角・半角のスペース、タブ、改行を数えません。ES や課題で「空白を含まない」と指定されたときに使います。</li>
+<li><b>原稿用紙</b>: 1行20字・20行の400字詰めとして、段落ごとに改行した場合の行数から計算します（句読点のぶら下げなど細かい決まりは含みません）。</li>
+<li><b>X（Twitter）</b>: 日本語などの全角文字は2、半角英数字は1として数え、280 までの残りを表示します。URL は 23 として数えます。全角だけなら 140 文字です。</li>
+<li><b>読む時間</b>: 1分間に約500字として計算した目安です。</li>
+</ul>
+<h2>よくある質問</h2>
+<dl class="faq">
+<dt>入力した文章はどこかに送られますか？</dt><dd>いいえ。数えるのはお使いのブラウザの中だけで、文章がサーバーに送られることはありません。</dd>
+<dt>Word の文字数と違うのはなぜ？</dt><dd>Word は半角英単語を「単語」としてまとめて数えるなど、数え方が違うことがあります。このツールは1文字ずつ数えます。</dd>
+<dt>原稿用紙の枚数が手書きと少し違います</dt><dd>句読点を行の最後にぶら下げる、かぎかっこの扱いなど、手書きの細かい決まりまでは再現していません。目安としてお使いください。</dd>
+<dt>X（Twitter）で全角140文字というのは？</dt><dd>X は半角英数字を1、日本語などの全角文字を2として、合計280までを1回の投稿にできます。そのため全角だけだと140文字です。</dd>
+</dl>
+</main>
+<footer><a href="../">ツール一覧</a><a href="../about.html">運営者情報・プライバシー</a><br>ファイルや文章はお使いのブラウザの中だけで処理され、サーバーには送信されません。</footer>
+<script src="count.js"></script>
+</body>
+</html>

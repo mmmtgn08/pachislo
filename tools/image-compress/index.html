@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>画像圧縮・リサイズ（無料・登録不要・まとめてOK）｜かんたんツール箱</title>
+<meta name="description" content="写真やスクリーンショットの容量をブラウザだけで小さくします。JPG・PNG・WebP・iPhoneのHEICに対応。サイズ指定のリサイズ、複数枚の一括処理もできます。画像はサーバーに送信されません。">
+<meta property="og:title" content="画像圧縮・リサイズ（無料・登録不要・まとめてOK）｜かんたんツール箱">
+<meta property="og:description" content="写真やスクリーンショットの容量をブラウザだけで小さくします。JPG・PNG・WebP・iPhoneのHEICに対応。サイズ指定のリサイズ、複数枚の一括処理もできます。画像はサーバーに送信されません。">
+<meta property="og:type" content="website">
+<link rel="stylesheet" href="../style.css">
+<script type="application/ld+json">[{"@context": "https://schema.org", "@type": "WebApplication", "name": "画像圧縮・リサイズ", "description": "写真やスクリーンショットの容量をブラウザだけで小さくします。JPG・PNG・WebP・iPhoneのHEICに対応。サイズ指定のリサイズ、複数枚の一括処理もできます。画像はサーバーに送信されません。", "applicationCategory": "UtilitiesApplication", "operatingSystem": "Any", "inLanguage": "ja", "offers": {"@type": "Offer", "price": "0", "priceCurrency": "JPY"}}, {"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "画像はどこかにアップロードされますか？", "acceptedAnswer": {"@type": "Answer", "text": "いいえ。圧縮はお使いのブラウザの中だけで行い、画像がサーバーに送られることはありません。通信のない状態でも、ページを開いたあとなら動きます。"}}, {"@type": "Question", "name": "iPhone の HEIC 写真も使えますか？", "acceptedAnswer": {"@type": "Answer", "text": "使えます。HEIC の写真は JPG に変換して圧縮します。"}}, {"@type": "Question", "name": "何枚まで一度に処理できますか？", "acceptedAnswer": {"@type": "Answer", "text": "枚数の制限はありません。ただし端末のメモリによっては、とても大きな画像を大量に入れると時間がかかります。"}}, {"@type": "Question", "name": "圧縮すると写真の位置情報は消えますか？", "acceptedAnswer": {"@type": "Answer", "text": "はい。保存し直す仕組みのため、位置情報や撮影日時などの写真の情報は残りません。"}}, {"@type": "Question", "name": "元より大きくなることはありますか？", "acceptedAnswer": {"@type": "Answer", "text": "すでに十分小さい画像では起きることがあります。その場合は元のファイルをそのまま保存できるようにしています。"}}]}]</script>
+</head>
+<body>
+<header class="site-header"><div class="inner"><a class="logo" href="../">かんたん<span>ツール箱</span></a><nav><a href="../">ツール一覧</a></nav></div></header>
+<main>
+<span class="badge">無料・登録不要・アップロードなし</span>
+<h1>画像圧縮・リサイズ</h1>
+<p class="lead">写真の容量を小さくして、メール添付・ブログ・SNS・フォームのサイズ制限に合わせます。画像はお使いの端末の中だけで処理します。</p>
+<div class="card">
+<div id="drop" class="drop" tabindex="0" role="button" aria-label="画像を選ぶ">
+<strong>ここに画像をドロップ</strong>
+<small>またはタップして選ぶ（複数OK・貼り付けもOK）／ JPG・PNG・WebP・HEIC（iPhone）</small>
+</div>
+<input id="file" type="file" accept="image/*,.heic,.heif" multiple hidden>
+<div class="options">
+<label><span>画質 <b id="qualityLabel"></b>%（低いほど軽くなる）</span><input id="quality" type="range" min="30" max="100" value="75"></label><label>横幅の上限<select id="maxW"><option value="0">変えない</option><option value="3840">3840px（4K）</option><option value="1920" selected>1920px（フルHD）</option><option value="1280">1280px（ブログ・SNS向け）</option><option value="800">800px（メール向け）</option><option value="400">400px（アイコン向け）</option></select></label><label>保存する形式<select id="format"><option value="keep" selected>元と同じ（HEICはJPG）</option><option value="image/jpeg">JPG（写真向け・一番使える）</option><option value="image/png">PNG（文字・図・透明）</option><option value="image/webp">WebP（軽い・Web向け）</option></select></label>
+</div>
+<ul id="files" class="files"></ul>
+<div class="row" style="margin-top:12px"><button id="saveAll" hidden>すべて保存</button></div>
+</div>
+<div class="ad-slot" data-ad="tool"></div>
+
+<h2>使い方</h2>
+<ol>
+<li>画像をドロップするか、枠をタップして選びます（何枚でもまとめて選べます）。</li>
+<li>すぐに圧縮され、元のサイズと圧縮後のサイズが表示されます。</li>
+<li>「保存」で1枚ずつ、「すべて保存」でまとめて保存します。</li>
+</ol>
+<p>画質や横幅を変えると、入れた画像がすべて新しい設定で処理し直されます。ちょうどよい大きさになるまで調整できます。</p>
+
+<h2>どのくらい小さくなる？</h2>
+<p>スマホで撮った写真（3〜5MB程度）は、横幅1920px・画質75%にすると、多くの場合 300KB〜800KB ほどになります。横幅を1280pxにすると、さらに半分ほどになります。画面で見る分には違いがほとんどわからない大きさです。</p>
+<p>PNG のスクリーンショットは、形式を「JPG」か「WebP」に変えると大きく軽くなります。文字や線をくっきり残したいときは PNG のまま横幅を小さくしてください。</p>
+<h2>よくある質問</h2>
+<dl class="faq">
+<dt>画像はどこかにアップロードされますか？</dt><dd>いいえ。圧縮はお使いのブラウザの中だけで行い、画像がサーバーに送られることはありません。通信のない状態でも、ページを開いたあとなら動きます。</dd>
+<dt>iPhone の HEIC 写真も使えますか？</dt><dd>使えます。HEIC の写真は JPG に変換して圧縮します。</dd>
+<dt>何枚まで一度に処理できますか？</dt><dd>枚数の制限はありません。ただし端末のメモリによっては、とても大きな画像を大量に入れると時間がかかります。</dd>
+<dt>圧縮すると写真の位置情報は消えますか？</dt><dd>はい。保存し直す仕組みのため、位置情報や撮影日時などの写真の情報は残りません。</dd>
+<dt>元より大きくなることはありますか？</dt><dd>すでに十分小さい画像では起きることがあります。その場合は元のファイルをそのまま保存できるようにしています。</dd>
+</dl>
+</main>
+<footer><a href="../">ツール一覧</a><a href="../about.html">運営者情報・プライバシー</a><br>ファイルや文章はお使いのブラウザの中だけで処理され、サーバーには送信されません。</footer>
+<script>window.IMG_TOOL = {mode: "compress"};</script>
+<script src="../img.js"></script>
+</body>
+</html>
