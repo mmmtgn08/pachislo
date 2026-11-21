@@ -8,6 +8,11 @@ ROOT = str(Path(__file__).resolve().parent.parent)
 CNAME = Path(ROOT, "CNAME")
 DOMAIN = CNAME.read_text().strip() if CNAME.exists() else ""
 SITE = f"https://{DOMAIN}/" if DOMAIN else ""
+# Google AdSense のサイト運営者ID（例: ca-pub-1234567890123456）。_build/adsense.txt に書くと全ページに自動広告のコードが入る
+ADS_FILE = Path(ROOT, "_build", "adsense.txt")
+ADS_ID = ADS_FILE.read_text().strip() if ADS_FILE.exists() else ""
+ADS_TAG = (f'<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client={ADS_ID}" crossorigin="anonymous"></script>\n'
+           if ADS_ID else "")
 PAGES = []  # (slug, h1, 一覧用の説明, 分類)
 
 HEAD = """<!doctype html>
@@ -49,7 +54,7 @@ def page(slug, title, h1, desc, body, faq, scripts, card="", group="画像"):
     os.makedirs(f"{ROOT}/{slug}", exist_ok=True)
     PAGES.append((slug, h1, card or desc, group))
     canonical = f'<link rel="canonical" href="{SITE}{slug}/">\n' if SITE else ""
-    html = HEAD.format(title=title, desc=desc, ld=ld(h1, desc, faq), canonical=canonical) + body + faq_html(faq) + FOOT.format(scripts=scripts)
+    html = HEAD.format(title=title, desc=desc, ld=ld(h1, desc, faq), canonical=canonical + ADS_TAG) + body + faq_html(faq) + FOOT.format(scripts=scripts)
     open(f"{ROOT}/{slug}/index.html", "w").write(html)
 
 DROP = """<div class="card">
@@ -337,7 +342,7 @@ page("qr-code",
 # ───────── 一覧・運営者情報・sitemap ─────────
 def root_page(fname, title, desc, body):
     canonical = f'<link rel="canonical" href="{SITE}{"" if fname == "index.html" else fname}">\n' if SITE else ""
-    head = HEAD.format(title=title, desc=desc, ld="[]", canonical=canonical).replace("../", "./")
+    head = HEAD.format(title=title, desc=desc, ld="[]", canonical=canonical + ADS_TAG).replace("../", "./")
     head = head.replace('<script type="application/ld+json">[]</script>\n', "")
     open(f"{ROOT}/{fname}", "w").write(head + body + FOOT.format(scripts="").replace("../", "./"))
 
@@ -382,5 +387,7 @@ if SITE:
     urls = [SITE] + [f"{SITE}{slug}/" for slug, *_ in PAGES] + [f"{SITE}about.html"]
     Path(ROOT, "sitemap.xml").write_text('<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
         + "\n".join(f"  <url><loc>{u}</loc></url>" for u in urls) + "\n</urlset>\n")
+    if ADS_ID:
+        Path(ROOT, "ads.txt").write_text(f"google.com, {ADS_ID.replace('ca-', '')}, DIRECT, f08c47fec0942fa0\n")
     Path(ROOT, "robots.txt").write_text(f"User-agent: *\nAllow: /\nDisallow: /_build/\n\nSitemap: {SITE}sitemap.xml\n")
 print(f"{len(PAGES)} ツール + 一覧 + 運営者情報" + (f"（{SITE}）" if SITE else "（CNAME なし: canonical・sitemap は省略）"))

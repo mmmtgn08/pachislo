@@ -13,6 +13,8 @@
 |---|---|
 | `moshimo/GUIDE.md` | 編集方針・事実のルール・使えるシーン一覧。**ここを書き換えると動画の中身が変わる** |
 | `moshimo/DAILY_PROMPT.md` | 定期タスクに登録するプロンプト |
+| `moshimo/GUIDE_LONG.md` / `moshimo/LONG_PROMPT.md` | 週1本の長尺動画（16:9・8〜11分・章立て）の台本ガイドと定期タスクのプロンプト |
+| `moshimo/SETUP_TIKTOK.md` | TikTok 同時投稿のセットアップ手順（認証情報を登録すると自動で投稿） |
 | `moshimo/history.jsonl` | 投稿履歴（自動追記） |
 | `moshimo/requests.md` | 視聴者のリクエスト（コメントから自動で追記。手で書いてもOK） |
 | `moshimo/COMMENTS.md` | コメント返信のルール |
@@ -20,7 +22,7 @@
 | `moshimo/topics/` | 台本の例と、投稿した台本のアーカイブ（`posted/`） |
 | `moshimo/src/` | 3D シーンと画面の演出（Remotion） |
 | `moshimo/scripts/render.mjs` | 台本 → ナレーション → 動画 |
-| `moshimo/tools/` | 効果音・BGM の合成（著作権フリー）、YouTube 投稿、トークン取得 |
+| `moshimo/tools/` | 効果音・BGM の合成（著作権フリー）、YouTube・TikTok 投稿、トークン取得、再生数レポート |
 
 ## セットアップ
 1. GitHub の Settings → Secrets and variables → Actions に登録（登録済み）
@@ -58,11 +60,18 @@ node scripts/render.mjs topics/gravity.json --tts dummy --out out/test.mp4
 | `tools/image-compress/` | 画像圧縮・リサイズ（複数枚・HEIC 対応） |
 | `tools/image-convert/` | 画像の形式変換（HEIC→JPG、PNG/JPG/WebP） |
 | `tools/exif-remove/` | 写真の位置情報（Exif）の確認と削除 |
+| `tools/pdf-merge/` / `tools/pdf-split/` / `tools/image-to-pdf/` | PDF結合・分割（ページ抽出）・画像→PDF |
+| `tools/qr-code/` | QRコード作成（PNG・SVG） |
 | `tools/about.html` | 運営者情報・プライバシーポリシー（AdSense の審査に必要） |
-| `tools/style.css` / `tools/img.js` | 共通の見た目 / 画像処理 |
+| `tools/style.css` / `tools/img.js` / `tools/pdf.js` / `tools/decode.js` | 共通の見た目 / 画像処理 / PDF処理 / 画像の読み込み（HEIC対応） |
+| `tools/vendor/` | 同梱ライブラリ（pdf-lib・heic2any・qrcode-generator、MIT） |
+| `tools/_build/build.py` | 全ページの生成。ツールを足すときはここに書いて `python3 tools/_build/build.py` |
+| `tools/SETUP_DOMAIN.md` | 独自ドメインで公開する手順 |
 
-広告を入れるときは、各ページの `<div class="ad-slot">` に広告コードを入れる。
+`tools/CNAME` にドメインを書くと canonical・sitemap.xml・robots.txt が、`tools/_build/adsense.txt` に AdSense の ID を書くと広告コードと ads.txt が、生成時に入る。
 
 # 再生数レポート（`moshimo/STATS.md`）
+
+長尺動画は `moshimo.yml` に `chapters` 入りの台本を渡すと、16:9 で描画しサムネイルも設定する（`GUIDE_LONG.md`）。
 
 `moshimo-stats` ワークフローが毎朝 6:17（日本時間）に動画ごとの再生数を取得し、`moshimo/STATS.md` に収益化条件までの進み具合をまとめる。毎日の台本づくりもこのレポートを参考にする。

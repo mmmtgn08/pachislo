@@ -1,6 +1,7 @@
 import React from 'react';
 import {Composition} from 'remotion';
 import {Main} from './Main';
+import {LongMain, LongProps, Thumbnail, longFrames} from './Long';
 import {FPS, MoshimoProps} from './lib';
 import sample from '../topics/oxygen.json';
 
@@ -25,7 +26,18 @@ const estimate = (p: any): MoshimoProps => {
   };
 };
 
+// 長尺動画のプレビュー用サンプル(本番は render.mjs が props を渡す)
+const longSample: LongProps = {
+  title: 'もしも地球シリーズ\n深掘りスペシャル',
+  seed: 'long-sample',
+  intro: {text: '', frames: 150},
+  outro: {text: '', frames: 120},
+  cardFrames: 75,
+  chapters: [estimate(sample)].map((c) => ({...c, chapterTitle: '酸素が消えたら', badge: '第1章', cta: ''})),
+};
+
 export const Root: React.FC = () => (
+  <>
   <Composition
     id="Moshimo"
     component={Main as any}
@@ -39,4 +51,24 @@ export const Root: React.FC = () => (
       return {durationInFrames: p.scenes.reduce((a: number, s: any) => a + s.frames, 0), props: p};
     }}
   />
+  <Composition
+    id="MoshimoLong"
+    component={LongMain as any}
+    fps={FPS}
+    width={1920}
+    height={1080}
+    durationInFrames={300}
+    defaultProps={longSample}
+    calculateMetadata={({props}) => ({durationInFrames: longFrames(props as LongProps)})}
+  />
+  <Composition
+    id="Thumbnail"
+    component={Thumbnail as any}
+    fps={FPS}
+    width={1280}
+    height={720}
+    durationInFrames={1}
+    defaultProps={{text: 'もしも月が\n消えたら', sub: '深掘りスペシャル', seed: 'thumb'}}
+  />
+  </>
 );
