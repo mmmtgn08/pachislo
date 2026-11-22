@@ -5,7 +5,7 @@ on:
   workflow_dispatch:
     inputs:
       mode:
-        description: "fetch(未対応コメントを取得) / reply(返信を投稿)"
+        description: "fetch(未対応コメントを取得) / reply(返信を投稿) / diagnose(動画とチャンネルの状態を診断)"
         required: true
         default: "fetch"
       plan_json:
@@ -46,6 +46,8 @@ jobs:
         run: |
           if [ "$MODE" = "fetch" ]; then
             python tools/comments.py fetch
+          elif [ "$MODE" = "diagnose" ]; then
+            python tools/diagnose.py
           elif [ "$MODE" = "reply" ]; then
             printf '%s' "$PLAN_JSON" > "$RUNNER_TEMP/plan.json"
             python tools/comments.py reply "$RUNNER_TEMP/plan.json"
@@ -57,7 +59,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add comments requests.md 2>/dev/null || git add comments
+          git add comments requests.md diagnostics.json 2>/dev/null || git add comments
           git diff --cached --quiet && exit 0
           git commit -m "Comments: ${{ inputs.mode }} $(date -u +%F)"
           for i in 1 2 3 4; do
