@@ -59,6 +59,33 @@ def save_handled(ids: list[str]) -> None:
     HANDLED.write_text(json.dumps(ids[-3000:], ensure_ascii=False, indent=0) + "\n")
 
 
+def thread_replies(api, me: str, th: dict, top_text: str, handled: set, since: datetime) -> list[dict]:
+    """スレッド内の、自分以外が書いた未対応の返信を返す。"""
+    out = []
+    try:
+        resp = api.comments().list(part="snippet", parentId=th["id"], maxResults=100, textFormat="plainText").execute()
+    except HttpError as e:
+        print(f"返信の取得に失敗: {th['id']}: {e.status_code}")
+        return out
+    for c in resp.get("items", []):
+        sn = c["snippet"]
+        if c["id"] in handled or sn.get("authorChannelId", {}).get("value") == me:
+            continue
+        published = datetime.fromisoformat(sn["publishedAt"].replace("Z", "+00:00"))
+        if published < since:
+            continue
+        out.append({
+            "id": c["id"],
+            "video_id": th["snippet"].get("videoId", ""),
+            "in_reply_to": top_text[:200],
+            "text": sn.get("textOriginal") or sn.get("textDisplay", ""),
+            "likes": sn.get("likeCount", 0),
+            "replies": 0,
+            "published": sn["publishedAt"],
+        })
+    return out
+
+
 def fetch() -> None:
     api = yt()
     me = api.channels().list(part="id", mine=True).execute()["items"][0]["id"]
@@ -72,19 +99,21 @@ def fetch() -> None:
         for th in resp.get("items", []):
             top = th["snippet"]["topLevelComment"]
             sn = top["snippet"]
+            mine = sn.get("authorChannelId", {}).get("value") == me
             published = datetime.fromisoformat(sn["publishedAt"].replace("Z", "+00:00"))
-            if published < since:
-                continue
-            if top["id"] in handled or sn.get("authorChannelId", {}).get("value") == me:
-                continue
-            inbox.append({
-                "id": top["id"],
-                "video_id": th["snippet"].get("videoId", ""),
-                "text": sn.get("textOriginal") or sn.get("textDisplay", ""),
-                "likes": sn.get("likeCount", 0),
-                "replies": th["snippet"].get("totalReplyCount", 0),
-                "published": sn["publishedAt"],
-            })
+            top_text = sn.get("textOriginal") or sn.get("textDisplay", "")
+            if published >= since and not mine and top["id"] not in handled:
+                inbox.append({
+                    "id": top["id"],
+                    "video_id": th["snippet"].get("videoId", ""),
+                    "text": top_text,
+                    "likes": sn.get("likeCount", 0),
+                    "replies": th["snippet"].get("totalReplyCount", 0),
+                    "published": sn["publishedAt"],
+                })
+            # スレッド内の返信(固定コメントへの返信など)も拾う
+            if th["snippet"].get("totalReplyCount", 0) > 0:
+                inbox.extend(thread_replies(api, me, th, top_text, handled, since))
         token = resp.get("nextPageToken")
         if not token:
             break
@@ -107,8 +136,14 @@ def reply(plan_path: str) -> None:
         if len(text) > MAX_LEN or re.search(r"https?://|www\.", text):
             print(f"スキップ(長すぎる/リンクを含む): {r['id']}")
             continue
+        parent = r["id"].split(".")[0]  # 返信への返信は、親スレッドに @名前 付きで書く
         try:
-            api.comments().insert(part="snippet", body={"snippet": {"parentId": r["id"], "textOriginal": text}}).execute()
+            if parent != r["id"]:
+                got = api.comments().list(part="snippet", id=r["id"], textFormat="plainText").execute().get("items", [])
+                name = got[0]["snippet"].get("authorDisplayName", "") if got else ""
+                if name and not text.startswith("@"):
+                    text = f"{name if name.startswith('@') else '@' + name} {text}"
+            api.comments().insert(part="snippet", body={"snippet": {"parentId": parent, "textOriginal": text}}).execute()
             posted += 1
         except HttpError as e:
             print(f"返信に失敗: {r['id']}: {e.status_code}")
