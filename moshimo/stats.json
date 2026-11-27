@@ -1,9 +1,9 @@
 {
- "updated": "2026-11-26 12:35",
+ "updated": "2026-11-27 12:38",
  "channel": {
-  "subscribers": 12,
-  "views": 19351,
-  "videos": 15
+  "subscribers": 13,
+  "views": 21301,
+  "videos": 16
  },
  "videos": {
   "uUXOzAz0WQk": {
@@ -27,39 +27,44 @@
    "comment": 1
   },
   "HVGyBvj1yik": {
-   "view": 4094,
+   "view": 4096,
    "like": 31,
    "comment": 0
   },
   "M8KigCd7MQw": {
-   "view": 1074,
+   "view": 1076,
    "like": 6,
    "comment": 3
   },
   "UWLNcizj6Rs": {
-   "view": 935,
+   "view": 936,
    "like": 1,
    "comment": 1
   },
   "-4kHRior9QQ": {
-   "view": 1096,
+   "view": 1108,
    "like": 4,
    "comment": 1
   },
   "87DxXh8iNtA": {
-   "view": 1341,
+   "view": 1388,
    "like": 7,
-   "comment": 2
+   "comment": 3
   },
   "ciKSfOByyl8": {
-   "view": 1606,
+   "view": 1710,
    "like": 16,
-   "comment": 2
+   "comment": 3
   },
   "VRJTqdM6j1g": {
-   "view": 452,
+   "view": 1100,
    "like": 4,
    "comment": 1
+  },
+  "rNm4fNZN9uw": {
+   "view": 1044,
+   "like": 1,
+   "comment": 2
   }
  }
 }
