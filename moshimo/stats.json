@@ -1,70 +1,75 @@
 {
- "updated": "2026-11-27 12:38",
+ "updated": "2026-11-28 12:19",
  "channel": {
-  "subscribers": 13,
-  "views": 21301,
-  "videos": 16
+  "subscribers": 14,
+  "views": 22589,
+  "videos": 17
  },
  "videos": {
   "uUXOzAz0WQk": {
-   "view": 1252,
+   "view": 1253,
    "like": 8,
    "comment": 2
   },
   "sj9oNZvAEws": {
-   "view": 1203,
+   "view": 1204,
    "like": 6,
    "comment": 0
   },
   "Wy96VHnCZj4": {
-   "view": 964,
+   "view": 965,
    "like": 8,
    "comment": 3
   },
   "5e1b38uQWTo": {
-   "view": 1457,
+   "view": 1458,
    "like": 12,
    "comment": 1
   },
   "HVGyBvj1yik": {
-   "view": 4096,
+   "view": 4097,
    "like": 31,
    "comment": 0
   },
   "M8KigCd7MQw": {
-   "view": 1076,
+   "view": 1077,
    "like": 6,
    "comment": 3
   },
   "UWLNcizj6Rs": {
-   "view": 936,
+   "view": 937,
    "like": 1,
    "comment": 1
   },
   "-4kHRior9QQ": {
-   "view": 1108,
+   "view": 1109,
    "like": 4,
    "comment": 1
   },
   "87DxXh8iNtA": {
-   "view": 1388,
+   "view": 1409,
    "like": 7,
    "comment": 3
   },
   "ciKSfOByyl8": {
-   "view": 1710,
-   "like": 16,
+   "view": 1833,
+   "like": 17,
    "comment": 3
   },
   "VRJTqdM6j1g": {
-   "view": 1100,
+   "view": 1166,
    "like": 4,
    "comment": 1
   },
   "rNm4fNZN9uw": {
-   "view": 1044,
+   "view": 1110,
    "like": 1,
-   "comment": 2
+   "comment": 3
+  },
+  "Vc5IjtLAM3c": {
+   "view": 1039,
+   "like": 6,
+   "comment": 1
   }
  }
 }
